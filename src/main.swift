@@ -8,43 +8,43 @@ protocol ActualAnyProtocol:
 
 public class ActualAny: ActualAnyProtocol, Printable {
     let constant: Any
-    
+
     public required init(_ constant: Any) {
         self.constant = constant
     }
-    
+
     public var description: String {
         return "\(self.constant)"
     }
-    
+
     public class func convertFromBooleanLiteral(value: Bool) -> Self {
         return self(value)
     }
-    
+
     public class func convertFromStringLiteral(value: String) -> Self {
         return self(value)
     }
-    
+
     public class func convertFromExtendedGraphemeClusterLiteral(value: Character) -> Self {
         return self(String(value))
     }
-    
+
     public class func convertFromUnicodeScalarLiteral(value: Character) -> Self {
         return self(String(value))
     }
-    
+
     public class func convertFromIntegerLiteral(value: Int) -> Self {
         return self(value)
     }
-    
+
     public class func convertFromFloatLiteral(value: Double) -> Self {
         return self(value)
     }
-    
+
     public class func convertFromArrayLiteral(elements: AnyObject...) -> Self {
         return self(elements)
     }
-    
+
     public class func convertFromDictionaryLiteral(elements: (NSObject, AnyObject)...) -> Self {
         var dictionary = [NSObject: AnyObject]()
         for (key, value) in elements {
@@ -62,7 +62,7 @@ prefix func *(n: Any) -> ActualAny {
 enum Node<A: ActualAny>: Printable {
     case Branch2(A, A)
     case Branch3(A, A, A)
-    
+
     var toArray: [A] {
         switch self {
         case .Branch2(let a, let b):
@@ -71,7 +71,7 @@ enum Node<A: ActualAny>: Printable {
             return [a, b, c]
         }
     }
-    
+
     var description : String {
         switch self {
         case .Branch2(let a, let b):
@@ -87,7 +87,7 @@ enum Affix<A: ActualAny> {
     case Two(A, A)
     case Three(A, A, A)
     case Four(A, A, A, A)
-    
+
     var description : String {
         switch self {
         case .One(let a):
@@ -100,7 +100,7 @@ enum Affix<A: ActualAny> {
             return "Four \(a) \(b) \(c) \(d)"
         }
     }
-    
+
     func prepend(element: A) -> Affix? {
         switch self {
         case .One(let a):
@@ -113,7 +113,20 @@ enum Affix<A: ActualAny> {
             return nil
         }
     }
-    
+
+    func append(element: A) -> Affix? {
+        switch self {
+        case .One(let a):
+            return Two(a, element)
+        case .Two(let a, let b):
+            return Three(a, b, element)
+        case .Three(let a, let b, let c):
+            return Four(a, b, c, element)
+        case .Four:
+            return nil
+        }
+    }
+
     var toArray: [A] {
         switch self {
         case .One(let a):
@@ -143,11 +156,11 @@ enum FingerTree<A: ActualAny>: Printable {
         deeper: FingerTreePointer<ActualAny>,
         suffix: Affix<A>
     )
-    
+
     var pointer: FingerTreePointer<A> {
         return FingerTreePointer(self)
     }
-    
+
     func prepend(element: A) -> FingerTree<A> {
         switch self {
         case .Empty:
@@ -172,7 +185,32 @@ enum FingerTree<A: ActualAny>: Printable {
             )
         }
     }
-    
+
+    func append(element: A) -> FingerTree<A> {
+        switch self {
+        case .Empty:
+            return Single(element)
+        case .Single(let a):
+            return Deep(
+                prefix: Affix.One(a),
+                deeper: FingerTree<ActualAny>.Empty.pointer,
+                suffix: Affix.One(element)
+            )
+        case .Deep(let prefix, let deeper, .Four(let a, let b, let c, let d)):
+            return Deep(
+                prefix: prefix,
+                deeper: deeper.tree.append(*Node.Branch3(a, b, c)).pointer,
+                suffix: Affix.Two(d, element)
+            )
+        case .Deep(let prefix, let deeper, let suffix):
+            return .Deep(
+                prefix: prefix,
+                deeper: deeper,
+                suffix: suffix.append(element)!
+            )
+        }
+    }
+
     var toArray: [A] {
         switch self {
         case .Empty:
@@ -191,7 +229,7 @@ enum FingerTree<A: ActualAny>: Printable {
             ])
         }
     }
-    
+
     var description: String {
         return "\(self.toArray)"
     }
