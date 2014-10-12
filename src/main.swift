@@ -1,40 +1,40 @@
 
 
 
-enum Node<A> {
+enum Node<T> {
     case Branch2(
-        @autoclosure () -> A,
-        @autoclosure () -> A
+        @autoclosure () -> T,
+        @autoclosure () -> T
     )
     case Branch3(
-        @autoclosure () -> A,
-        @autoclosure () -> A,
-        @autoclosure () -> A
+        @autoclosure () -> T,
+        @autoclosure () -> T,
+        @autoclosure () -> T
     )
 }
 
 
-enum Affix<A> {
+enum Affix<T> {
     case One(
-        @autoclosure () -> A
+        @autoclosure () -> T
     )
     case Two(
-        @autoclosure () -> A,
-        @autoclosure () -> A
+        @autoclosure () -> T,
+        @autoclosure () -> T
     )
     case Three(
-        @autoclosure () -> A,
-        @autoclosure () -> A,
-        @autoclosure () -> A
+        @autoclosure () -> T,
+        @autoclosure () -> T,
+        @autoclosure () -> T
     )
     case Four(
-        @autoclosure () -> A,
-        @autoclosure () -> A,
-        @autoclosure () -> A,
-        @autoclosure () -> A
+        @autoclosure () -> T,
+        @autoclosure () -> T,
+        @autoclosure () -> T,
+        @autoclosure () -> T
     )
 
-    func prepend(element: A) -> Affix? {
+    func prepend(element: T) -> Affix? {
         switch self {
         case .One(let a):
             return Two(element, a)
@@ -47,7 +47,7 @@ enum Affix<A> {
         }
     }
 
-    func append(element: A) -> Affix? {
+    func append(element: T) -> Affix? {
         switch self {
         case .One(let a):
             return Two(a, element)
@@ -60,7 +60,7 @@ enum Affix<A> {
         }
     }
 
-    var viewFirst: (A, Affix<A>?) {
+    var viewFirst: (T, Affix<T>?) {
         switch self {
         case .One(let a):
             return (a(), nil)
@@ -73,7 +73,7 @@ enum Affix<A> {
         }
     }
 
-    var viewLast: (Affix<A>?, A) {
+    var viewLast: (Affix<T>?, T) {
         switch self {
         case .One(let a):
             return (nil, a())
@@ -95,7 +95,7 @@ enum Affix<A> {
         }
     }
 
-    var toArray: [A] {
+    var toArray: [T] {
         switch self {
         case .One(let a):
             return [a()]
@@ -110,23 +110,23 @@ enum Affix<A> {
 }
 
 
-enum FingerTree<A> {
+enum FingerTree<T> {
     case Empty
-    case Single(@autoclosure () -> A)
+    case Single(@autoclosure () -> T)
     case Deep(
-        prefix: Affix<A>,
-        deeper: @autoclosure () -> FingerTree<Node<A>>,
-        suffix: Affix<A>
+        prefix: Affix<T>,
+        deeper: @autoclosure () -> FingerTree<Node<T>>,
+        suffix: Affix<T>
     )
 
-    func prepend(element: A) -> FingerTree<A> {
+    func prepend(element: T) -> FingerTree<T> {
         switch self {
         case .Empty:
             return Single(element)
         case .Single(let a):
             return Deep(
                 prefix: Affix.One(element),
-                deeper: FingerTree<Node<A>>.Empty,
+                deeper: FingerTree<Node<T>>.Empty,
                 suffix: Affix.One(a)
             )
         case .Deep(.Four(let a, let b, let c, let d), let deeper, let suffix):
@@ -144,14 +144,14 @@ enum FingerTree<A> {
         }
     }
 
-    func append(element: A) -> FingerTree<A> {
+    func append(element: T) -> FingerTree<T> {
         switch self {
         case .Empty:
             return Single(element)
         case .Single(let a):
             return Deep(
                 prefix: Affix.One(a),
-                deeper: FingerTree<Node<A>>.Empty,
+                deeper: FingerTree<Node<T>>.Empty,
                 suffix: Affix.One(element)
             )
         case .Deep(let prefix, let deeper, .Four(let a, let b, let c, let d)):
@@ -169,16 +169,16 @@ enum FingerTree<A> {
         }
     }
 
-    private static func nodes(array: [A]) -> [Node<A>]? {
+    private static func nodes(array: [T]) -> [Node<T>]? {
         if array.count <= 1 {
             return nil
         } else if array.count == 2 {
-            return [Node<A>.Branch2(array[0], array[1])]
+            return [Node<T>.Branch2(array[0], array[1])]
         } else if array.count == 3 {
-            return [Node<A>.Branch3(array[0], array[1], array[2])]
+            return [Node<T>.Branch3(array[0], array[1], array[2])]
         } else {
             var nodeArray = nodes(Array(array[0..<(array.count - 2)]))
-            nodeArray!.append(Node<A>.Branch2(
+            nodeArray!.append(Node<T>.Branch2(
                 array[array.count - 2],
                 array[array.count - 1]
                 ))
@@ -187,10 +187,10 @@ enum FingerTree<A> {
     }
 
     private static func joinTwo(
-        joiner: [A] = [],
-        left: FingerTree<A>,
-        right: FingerTree<A>
-    ) -> FingerTree<A> {
+        joiner: [T] = [],
+        left: FingerTree<T>,
+        right: FingerTree<T>
+    ) -> FingerTree<T> {
 
         switch (joiner, left, right) {
         case (_, .Empty, _) where joiner.isEmpty:
@@ -202,7 +202,7 @@ enum FingerTree<A> {
         case (_, .Empty, _):
             return joinTwo(
                 joiner: Array(joiner[1..<joiner.count]),
-                left: FingerTree<A>.Empty,
+                left: FingerTree<T>.Empty,
                 right: right
             ).prepend(joiner.first!)
 
@@ -210,13 +210,13 @@ enum FingerTree<A> {
             return joinTwo(
                 joiner: Array(joiner[0..<(joiner.count - 1)]),
                 left: left,
-                right: FingerTree<A>.Empty
+                right: FingerTree<T>.Empty
             ).append(joiner.last!)
 
         case (_, .Single(let a), _):
             return joinTwo(
                 joiner: joiner,
-                left: FingerTree<A>.Empty,
+                left: FingerTree<T>.Empty,
                 right: right
             ).prepend(a())
 
@@ -224,7 +224,7 @@ enum FingerTree<A> {
             return joinTwo(
                 joiner: joiner,
                 left: left,
-                right: FingerTree<A>.Empty
+                right: FingerTree<T>.Empty
             ).append(a())
 
         case (
@@ -232,9 +232,9 @@ enum FingerTree<A> {
             .Deep(let leftPrefix, let leftDeeper, let leftSuffix),
             .Deep(let rightPrefix, let rightDeeper, let rightSuffix)
         ):
-            return FingerTree<A>.Deep(
+            return FingerTree<T>.Deep(
                 prefix: leftPrefix,
-                deeper: FingerTree<Node<A>>.joinTwo(
+                deeper: FingerTree<Node<T>>.joinTwo(
                     joiner: nodes(
                         leftSuffix.toArray + joiner + rightPrefix.toArray
                     )!,
@@ -252,9 +252,9 @@ enum FingerTree<A> {
     }
 
     static func join(
-        sequence: [A] = [],
-        trees: FingerTree<A>...
-    ) -> FingerTree<A> {
+        sequence: [T] = [],
+        trees: FingerTree<T>...
+    ) -> FingerTree<T> {
 
         return trees.reduce(
             FingerTree.Empty,
@@ -262,8 +262,8 @@ enum FingerTree<A> {
         )
     }
 
-    func extend(tree: FingerTree<A>) -> FingerTree<A> {
-        return FingerTree<A>.join(trees: self, tree)
+    func extend(tree: FingerTree<T>) -> FingerTree<T> {
+        return FingerTree<T>.join(trees: self, tree)
     }
 
     static func fromAffix<T>(affix: Affix<T>) -> FingerTree<T> {
@@ -293,11 +293,11 @@ enum FingerTree<A> {
 }
 
 
-enum TreeView<A> {
+enum TreeView<T> {
     case Nil
     case View(
-        element: @autoclosure () -> A,
-        rest: FingerTree<A>
+        element: @autoclosure () -> T,
+        rest: FingerTree<T>
     )
 
     static func viewLeft<T>(
