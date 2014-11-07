@@ -1,0 +1,67 @@
+// Measure.swift
+//
+// Copyright (c) 2014 Michael Mitchell
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+
+protocol Monoid {
+    class func empty() -> Self
+    class func monoidPlus(#left: Self, right: Self) -> Self
+}
+
+
+protocol Measured {
+    typealias M: Monoid
+    var measure: M {get}
+}
+
+
+final class SizedValue<T>: Measured, Printable {
+    typealias M = Size
+    let value: T
+    init(value: T) {
+        self.value = value
+    }
+
+    var measure: Size {
+        return Size(value: 1)
+    }
+
+    var description: String {
+        return "\(self.value)"
+    }
+}
+
+
+final class Size: Monoid {
+    let value: Int
+
+    private init(value: Int) {
+        self.value = value
+    }
+
+    class func monoidPlus(#left: Size, right: Size) -> Size {
+        return Size(value: left.value + right.value)
+    }
+
+    class func empty() -> Size {
+        return Size(value: 0)
+    }
+}
