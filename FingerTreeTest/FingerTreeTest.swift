@@ -1,6 +1,6 @@
-// Measure.swift
+// FingerTreeTest.swift
 //
-// Copyright (c) 2014 Michael Mitchell
+// Copyright (c) 2015 Michael Mitchell
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,48 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import XCTest
 
-protocol Monoid {
-    class func empty() -> Self
-    class func monoidPlus(#left: Self, right: Self) -> Self
-}
+class FingerTreeTest: XCTestCase {
 
-
-protocol Measured {
-    typealias M: Monoid
-    var measure: M {get}
-}
-
-
-final class SizedValue<T>: Measured, Printable {
-    typealias M = Size
-    let value: T
-    init(value: T) {
-        self.value = value
-    }
-
-    var measure: Size {
-        return Size(value: 1)
-    }
-
-    var description: String {
-        return "\(self.value)"
-    }
-}
-
-
-final class Size: Monoid {
-    let value: Int
-
-    private init(value: Int) {
-        self.value = value
-    }
-
-    class func monoidPlus(#left: Size, right: Size) -> Size {
-        return Size(value: left.value + right.value)
-    }
-
-    class func empty() -> Size {
-        return Size(value: 0)
-    }
 }
