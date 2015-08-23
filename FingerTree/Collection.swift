@@ -1,4 +1,4 @@
-// FingerTreeTest.swift
+// Collection.swift
 //
 // Copyright (c) 2015 Michael Mitchell
 //
@@ -20,8 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import XCTest
+public struct ImmutableCollection<T>: CollectionType {
+    public typealias Index = Int
 
-class FingerTreeTest: XCTestCase {
+    private let tree: FingerTree<Value<T>, Size>
 
+    init(_ tree: FingerTree<Value<T>, Size> = FingerTree()) {
+        self.tree = tree
+    }
+
+    public let startIndex: Int = 0
+
+    public var endIndex: Int {
+        return tree.measure.value
+    }
+
+    public subscript(position: Int) -> T {
+        let split = try! Split.split(
+            predicate: {$0.value > position && position >= 0},
+            startAnnotation: Size.identity,
+            tree: self.tree
+        )
+        return split.element.value
+    }
+}
+
+public struct PriorityQueue<T> {
+    
 }

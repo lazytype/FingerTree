@@ -21,102 +21,120 @@
 // THE SOFTWARE.
 
 enum AffixError: ErrorType {
-    case ArrayTooSmall
-    case ArrayTooLarge
-    case AffixTooLarge
+    case TooLarge
 }
 
-enum Affix<Element: Measured, V: Monoid where V == Element.V>: Measured {
-    case One(Element)
-    case Two(Element, Element)
-    case Three(Element, Element, Element)
-    case Four(Element, Element, Element, Element)
+enum Affix<Element: Measurable, V: Monoid where V == Element.V>
+    : CachedMeasurable {
+    indirect case One(Element, CachedValue<V>)
+    indirect case Two(Element, Element, CachedValue<V>)
+    indirect case Three(Element, Element, Element, CachedValue<V>)
+    indirect case Four(Element, Element, Element, Element, CachedValue<V>)
+
+    init(_ a: Element) {
+        self = Affix.One(a, CachedValue())
+    }
+
+    init(_ a: Element, _ b: Element) {
+        self = Affix.Two(a, b, CachedValue())
+    }
+
+    init(_ a: Element, _ b: Element, _ c: Element) {
+        self = Affix.Three(a, b, c, CachedValue())
+    }
+
+    init(_ a: Element, _ b: Element, _ c: Element, _ d: Element) {
+        self = Affix.Four(a, b, c, d, CachedValue())
+    }
 
     func preface(element: Element) throws -> Affix<Element, V> {
         switch self {
-        case .One(let a):
-            return Two(element, a)
-        case .Two(let a, let b):
-            return Three(element, a, b)
-        case .Three(let a, let b, let c):
-            return Four(element, a, b, c)
+        case let .One(a, _):
+            return Affix(element, a)
+        case let .Two(a, b, _):
+            return Affix(element, a, b)
+        case let .Three(a, b, c, _):
+            return Affix(element, a, b, c)
         case .Four:
-            throw AffixError.AffixTooLarge
+            throw AffixError.TooLarge
         }
     }
 
     func append(element: Element) throws -> Affix<Element, V> {
         switch self {
-        case .One(let a):
-            return Two(a, element)
-        case .Two(let a, let b):
-            return Three(a, b, element)
-        case .Three(let a, let b, let c):
-            return Four(a, b, c, element)
+        case let .One(a, _):
+            return Affix(a, element)
+        case let .Two(a, b, _):
+            return Affix(a, b, element)
+        case let .Three(a, b, c, _):
+            return Affix(a, b, c, element)
         case .Four:
-            throw AffixError.AffixTooLarge
+            throw AffixError.TooLarge
         }
     }
 
     var viewFirst: (Element, Affix<Element, V>?) {
         switch self {
-        case .One(let a):
+        case let .One(a, _):
             return (a, nil)
-        case .Two(let a, let b):
-            return (a, One(b))
-        case .Three(let a, let b, let c):
-            return (a, Two(b, c))
-        case .Four(let a, let b, let c, let d):
-            return (a, Three(b, c, d))
+        case let .Two(a, b, _):
+            return (a, Affix(b))
+        case let .Three(a, b, c, _):
+            return (a, Affix(b, c))
+        case let .Four(a, b, c, d, _):
+            return (a, Affix(b, c, d))
         }
     }
 
     var viewLast: (Affix<Element, V>?, Element) {
         switch self {
-        case .One(let a):
+        case let .One(a, _):
             return (nil, a)
-        case .Two(let a, let b):
-            return (One(a), b)
-        case .Three(let a, let b, let c):
-            return (Two(a, b), c)
-        case .Four(let a, let b, let c, let d):
-            return (Three(a, b, c), d)
+        case let .Two(a, b, _):
+            return (Affix(a), b)
+        case let .Three(a, b, c, _):
+            return (Affix(a, b), c)
+        case let .Four(a, b, c, d, _):
+            return (Affix(a, b, c), d)
         }
     }
 
     var toArray: [Element] {
         switch self {
-        case .One(let a):
+        case let .One(a, _):
             return [a]
-        case .Two(let a, let b):
+        case let .Two(a, b, _):
             return [a, b]
-        case .Three(let a, let b, let c):
+        case let .Three(a, b, c, _):
             return [a, b, c]
-        case .Four(let a, let b, let c, let d):
+        case let .Four(a, b, c, d, _):
             return [a, b, c, d]
         }
     }
 
-    static func fromArray(array: [Element]) throws -> Affix<Element, V> {
-        switch array.count {
-        case 1:
-            return .One(array[0])
-        case 2:
-            return .Two(array[0], array[1])
-        case 3:
-            return .Three(array[0], array[1], array[2])
-        case 4:
-            return .Four(array[0], array[1], array[2], array[3])
-        default:
-            if array.count == 0 {
-                throw AffixError.ArrayTooSmall
-            } else {
-                throw AffixError.ArrayTooLarge
-            }
+    internal var computeMeasure: V {
+        switch self {
+        case let .One(a, _):
+            return a.measure
+        case let .Two(a, b, _):
+            return a.measure <> b.measure
+        case let .Three(a, b, c, _):
+            return a.measure <> b.measure <> c.measure
+        case let .Four(a, b, c, d, _):
+            return a.measure <> b.measure <> c.measure <> d.measure
         }
     }
 
-    var measure: V {
-        return V.monoidSum(self.toArray.map {$0.measure})
+    var cachedMeasure: CachedValue<V> {
+        switch self {
+        case let .One(_, annotation):
+            return annotation
+        case let .Two(_, _, annotation):
+            return annotation
+        case let .Three(_, _, _, annotation):
+            return annotation
+        case let .Four(_, _, _, _, annotation):
+            return annotation
+        }
     }
 }

@@ -1,4 +1,4 @@
-// Sequence.swift
+// Cached.swift
 //
 // Copyright (c) 2015 Michael Mitchell
 //
@@ -20,13 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+class CachedValue<T> {
+    var value: T? = nil
+}
 
+protocol CachedMeasurable: Measurable {
+    typealias V
+    var computeMeasure: V {get}
+    var cachedMeasure: CachedValue<V> {get}
+}
 
-func index<T>(tree: FingerTree<Value<T>, Size>, index: Int) -> T {
-    let split = Split.split(
-        predicate: {$0.value > index},
-        startAnnotation: Size.empty(),
-        tree: tree
-    )!
-    return split.element.value
+extension CachedMeasurable {
+    var measure: V {
+        if self.cachedMeasure.value == nil {
+            self.cachedMeasure.value = self.computeMeasure
+        }
+
+        return self.cachedMeasure.value!
+    }
 }

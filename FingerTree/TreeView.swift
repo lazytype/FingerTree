@@ -20,68 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
-enum TreeView<Element: Measured, V: Monoid where V == Element.V> {
-    typealias T = Element
+struct TreeView<Element: Measurable, V: Monoid where V == Element.V> {
     typealias NodeTree = FingerTree<Node<Element, V>, V>
 
-    case Nil
-    case View(
-        element: T,
-        rest: FingerTree<Element, V>
-    )
+    let element: Element
+    let rest: FingerTree<Element, V>
+
+    init(element: Element, rest: FingerTree<Element, V>) {
+        self.element = element
+        self.rest = rest
+    }
 
     static func viewLeft(
         tree: FingerTree<Element, V>
-    ) -> TreeView<Element, V> {
+    ) -> TreeView<Element, V>? {
         switch tree {
         case .Empty:
-            return TreeView<Element, V>.Nil
-        case .Single(let a):
-            return TreeView<Element, V>.View(
+            return nil
+        case let .Single(a, _):
+            return TreeView<Element, V>(
                 element: a,
-                rest: FingerTree<Element, V>.Empty
+                rest: FingerTree<Element, V>()
             )
-        case .Deep(_, .One(let a), let deeper, let suffix):
-            var rest: FingerTree<Element, V>
+        case let .Deep(.One(a, _), deeper, suffix, _):
+            let rest: FingerTree<Element, V>
 
-            switch TreeView<Node<Element, V>, V>.viewLeft(deeper) {
-            case .View(let element, let deepRest):
-                let prefix: Affix<Element, V> = nodeToAffix(element)
-                let measures = [
-                    prefix.measure,
-                    deepRest.measure,
-                    suffix.measure
-                ]
-                let annotation = V.monoidSum(measures)
-
-                rest = FingerTree<Element, V>.Deep(
-                    annotation: annotation,
-                    prefix: prefix,
-                    deeper: deepRest,
+            if let view = TreeView<Node<Element, V>, V>.viewLeft(deeper) {
+                rest = FingerTree<Element, V>(
+                    prefix: nodeToAffix(view.element),
+                    deeper: view.rest,
                     suffix: suffix
                 )
-            case .Nil:
+            } else {
                 rest = suffix.toFingerTree
             }
 
-            return TreeView<Element, V>.View(
-                element: a,
-                rest: rest
-            )
-        case .Deep(_, let prefix, let deeper, let suffix):
-            let (first, rest) = prefix.viewFirst
-            let measures = [
-                rest!.measure,
-                deeper.measure,
-                suffix.measure
-            ]
-            let annotation: V = V.monoidSum(measures)
+            return TreeView<Element, V>(element: a, rest: rest)
 
-            return TreeView<Element, V>.View(
+        case let .Deep(prefix, deeper, suffix, _):
+            let (first, rest) = prefix.viewFirst
+
+            return TreeView<Element, V>(
                 element: first,
-                rest: FingerTree<Element, V>.Deep(
-                    annotation: annotation,
+                rest: FingerTree<Element, V>(
                     prefix: rest!,
                     deeper: deeper,
                     suffix: suffix
@@ -92,55 +73,36 @@ enum TreeView<Element: Measured, V: Monoid where V == Element.V> {
 
     static func viewRight(
         tree: FingerTree<Element, V>
-    ) -> TreeView<Element, V> {
+    ) -> TreeView<Element, V>? {
         switch tree {
         case .Empty:
-            return TreeView<Element, V>.Nil
-        case .Single(let a):
-            return TreeView<Element, V>.View(
+            return nil
+        case let .Single(a, _):
+            return TreeView<Element, V>(
                 element: a,
-                rest: FingerTree<Element, V>.Empty
+                rest: FingerTree<Element, V>()
             )
-        case .Deep(_, let prefix, let deeper, .One(let a)):
-            var rest: FingerTree<Element, V>
+        case let .Deep(prefix, deeper, .One(a, _), _):
+            let rest: FingerTree<Element, V>
 
-            switch TreeView<Node<Element, V>, V>.viewRight(deeper) {
-            case .View(let element, let deepRest):
-                let suffix: Affix<Element, V> = nodeToAffix(element)
-                let measures: [V] = [
-                    prefix.measure,
-                    deepRest.measure,
-                    suffix.measure
-                ]
-                let annotation: V = V.monoidSum(measures)
-
-                rest = FingerTree<Element, V>.Deep(
-                    annotation: annotation,
+            if let view = TreeView<Node<Element, V>, V>.viewRight(deeper) {
+                rest = FingerTree(
                     prefix: prefix,
-                    deeper: deepRest,
-                    suffix: nodeToAffix(element)
+                    deeper: view.rest,
+                    suffix: nodeToAffix(view.element)
                 )
-            case .Nil:
+            } else {
                 rest = prefix.toFingerTree
             }
 
-            return TreeView<Element, V>.View(
-                element: a,
-                rest: rest
-            )
-        case .Deep(_, let prefix, let deeper, let suffix):
+            return TreeView<Element, V>(element: a, rest: rest)
+
+        case let .Deep(prefix, deeper, suffix, _):
             let (rest, last) = suffix.viewLast
 
-            let annotation: V = V.monoidSum(
-                prefix.measure,
-                deeper.measure,
-                rest!.measure
-            )
-
-            return TreeView<Element, V>.View(
+            return TreeView<Element, V>(
                 element: last,
-                rest: FingerTree<Element, V>.Deep(
-                    annotation: annotation,
+                rest: FingerTree<Element, V>(
                     prefix: prefix,
                     deeper: deeper,
                     suffix: rest!
@@ -149,106 +111,89 @@ enum TreeView<Element: Measured, V: Monoid where V == Element.V> {
         }
     }
 
-    private static func nodeToAffix(
+    internal static func nodeToAffix(
         node: Node<Element, V>
     ) -> Affix<Element, V> {
         switch node {
-        case .Branch2(_, let a, let b):
-            return Affix<Element, V>.Two(a, b)
-        case .Branch3(_, let a, let b, let c):
-            return Affix<Element, V>.Three(a, b, c)
+        case let .Branch2(a, b, _):
+            return Affix(a, b)
+        case let .Branch3(a, b, c, _):
+            return Affix(a, b, c)
         }
     }
 }
-
 
 extension Affix {
     typealias NodeTree = FingerTree<Node<Element, V>, V>
 
     var toFingerTree: FingerTree<Element, V> {
         switch self {
-        case .One(let a):
-            return FingerTree<Element, V>.Single(a)
-        case .Two(let a, let b):
-            return FingerTree<Element, V>.Deep(
-                annotation: self.measure,
-                prefix: Affix<Element, V>.One(a),
-                deeper: NodeTree.Empty,
-                suffix: Affix<Element, V>.One(b)
+        case let .One(a, _):
+            return FingerTree<Element, V>(a)
+        case let .Two(a, b, _):
+            return FingerTree<Element, V>(
+                prefix: Affix(a),
+                deeper: NodeTree(),
+                suffix: Affix(b)
             )
-        case .Three(let a, let b, let c):
-            return FingerTree<Element, V>.Deep(
-                annotation: self.measure,
-                prefix: Affix<Element, V>.Two(a, b),
-                deeper: NodeTree.Empty,
-                suffix: Affix<Element, V>.One(c)
+        case let .Three(a, b, c, _):
+            return FingerTree<Element, V>(
+                prefix: Affix(a, b),
+                deeper: NodeTree(),
+                suffix: Affix(c)
             )
-        case .Four(let a, let b, let c, let d):
-            return FingerTree<Element, V>.Deep(
-                annotation: self.measure,
-                prefix: Affix<Element, V>.Two(a, b),
-                deeper: NodeTree.Empty,
-                suffix: Affix<Element, V>.Two(c, d)
+        case let .Four(a, b, c, d, _):
+            return FingerTree<Element, V>(
+                prefix: Affix(a, b),
+                deeper: NodeTree(),
+                suffix: Affix(c, d)
             )
         }
     }
 }
 
-
 extension FingerTree {
     static func createDeep(
-        prefix prefix: [Element],
+        prefix prefix: Affix<Element, V>?,
         deeper: NodeTree,
-        suffix: [Element]
-    ) -> FingerTree? {
-        if prefix.isEmpty && suffix.isEmpty {
-            switch TreeView<Node<Element, V>, V>.viewLeft(deeper) {
-            case .Nil:
-                return FingerTree<Element, V>.Empty
-            case .View(let node, let leftDeeper):
+        suffix: Affix<Element, V>?
+    ) -> FingerTree {
+        if prefix == nil && suffix == nil {
+            if let view = TreeView<Node<Element, V>, V>.viewLeft(deeper) {
                 return createDeep(
-                    prefix: node.toArray,
-                    deeper: leftDeeper,
-                    suffix: [] as [Element]
+                    prefix: TreeView.nodeToAffix(view.element),
+                    deeper: view.rest,
+                    suffix: nil
                 )
+            } else {
+                return FingerTree<Element, V>()
             }
-        } else if prefix.isEmpty {
-            switch TreeView<Node<Element, V>, V>.viewRight(deeper) {
-            case .Nil:
-                return try! Affix<Element, V>.fromArray(suffix).toFingerTree
-            case .View(let node, let rightDeeper):
+        } else if prefix == nil {
+            if let view = TreeView<Node<Element, V>, V>.viewRight(deeper) {
                 return createDeep(
-                    prefix: node.toArray,
-                    deeper: rightDeeper,
+                    prefix: TreeView.nodeToAffix(view.element),
+                    deeper: view.rest,
                     suffix: suffix
                 )
+            } else {
+                return suffix!.toFingerTree
             }
-        } else if suffix.isEmpty {
-            switch TreeView<Node<Element, V>, V>.viewRight(deeper) {
-            case .Nil:
-                return try! Affix<Element, V>.fromArray(prefix).toFingerTree
-            case .View(let node, let rightDeeper):
+        } else if suffix == nil {
+            if let view = TreeView<Node<Element, V>, V>.viewRight(deeper) {
                 return createDeep(
                     prefix: prefix,
-                    deeper: rightDeeper,
-                    suffix: node.toArray
+                    deeper: view.rest,
+                    suffix: TreeView.nodeToAffix(view.element)
                 )
+            } else {
+                return prefix!.toFingerTree
             }
-        } else if prefix.count <= 4 && suffix.count <= 4 {
-            let prefixMeasure: V = V.monoidSum(prefix.map({$0.measure}))
-            let suffixMeasure: V = V.monoidSum(suffix.map({$0.measure}))
-            let annotation: V = V.monoidSum(
-                prefixMeasure,
-                deeper.measure,
-                suffixMeasure
-            );
-            return FingerTree.Deep(
-                annotation: annotation,
-                prefix: try! Affix.fromArray(prefix),
+        } else {
+            return FingerTree(
+                prefix: prefix!,
                 deeper: deeper,
-                suffix: try! Affix.fromArray(suffix)
+                suffix: suffix!
             )
         }
-        return nil
     }
 }

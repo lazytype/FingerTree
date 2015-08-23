@@ -20,32 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 protocol Monoid {
-    static func empty() -> Self
-    static func monoidPlus(left: Self, _ right: Self) -> Self
+    static var identity: Self {get}
+    func append(other: Self) -> Self
 }
 
-extension Monoid {
-    static func monoidSum(values: Self...) -> Self {
-        return monoidSum(values)
-    }
-
-    static func monoidSum(values: [Self]) -> Self {
-        var sum = Self.empty()
-        for value in values {
-            sum = monoidPlus(sum, value)
-        }
-        return sum
-    }
+infix operator <> { associativity left precedence 140 }
+internal func <><V: Monoid>(lhs: V, rhs: V) -> V {
+    return lhs.append(rhs)
 }
 
-protocol Measured {
+internal protocol Measurable {
     typealias V: Monoid
     var measure: V {get}
 }
 
-final class Value<T: Equatable>: Measured, Equatable, CustomStringConvertible {
+struct Value<T>: Measurable, CustomStringConvertible {
     typealias V = Size
 
     let value: T
@@ -63,28 +53,64 @@ final class Value<T: Equatable>: Measured, Equatable, CustomStringConvertible {
     }
 }
 
-func ==<T: Equatable>(lhs: Value<T>, rhs: Value<T>) -> Bool {
-    return lhs.value == rhs.value
-}
-
-
-final class Size: Monoid, CustomStringConvertible {
+struct Size: Monoid, CustomStringConvertible {
     let value: Int
+
+    private static let zero: Size = Size(0)
 
     private init(_ value: Int) {
         self.value = value
     }
 
-    class func monoidPlus(left: Size, _ right: Size) -> Size {
-        return Size(left.value + right.value)
+    func append(other: Size) -> Size {
+        return Size(self.value + other.value)
     }
 
-    class func empty() -> Size {
-        return Size(0)
+    static var identity: Size {
+        return Size.zero
     }
 
-    var description : String {
+    var description: String {
         return "\(self.value)"
     }
 }
 
+struct Prioritized<T>: Measurable {
+    typealias V = Priority
+
+    let value: T
+    let priority: Int
+
+    init(_ value: T, priority: Int) {
+        self.value = value
+        self.priority = priority
+    }
+
+    var measure: Priority {
+        return Priority.Value(self.priority)
+    }
+}
+
+enum Priority: Monoid {
+    case NegativeInfinity
+    case Value(Int)
+
+    func append(other: Priority) -> Priority {
+        switch (self, other) {
+        case (.NegativeInfinity, _):
+            return other
+        case (_, .NegativeInfinity):
+            return self
+        case let (.Value(value), .Value(otherValue)):
+            return value > otherValue ? self : other
+        default:
+            // All cases have actually been exhausted.
+            // Remove when the compiler is smarter about this.
+            return self
+        }
+    }
+
+    static var identity: Priority {
+        return Priority.NegativeInfinity
+    }
+}
