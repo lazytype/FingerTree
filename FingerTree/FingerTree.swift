@@ -121,12 +121,15 @@ enum FingerTree<Element: Measurable, V: Monoid where V == Element.V>
         }
     }
 
-    static func concatenate(
-        middle: [Element] = [],
+    static func concatenate<
+        S: CollectionType where
+        S.Index == Int, S.SubSequence == ArraySlice<Element>,
+        S.Generator.Element == Element
+    >(
+        middle middle: S,
         left: FingerTree<Element, V>,
         right: FingerTree<Element, V>
     ) -> FingerTree<Element, V> {
-
         switch (middle, left, right) {
         case (_, .Empty, _) where middle.isEmpty:
             return right
@@ -136,28 +139,28 @@ enum FingerTree<Element: Measurable, V: Monoid where V == Element.V>
 
         case (_, .Empty, _):
             return concatenate(
-                Array(middle[1..<middle.count]),
+                middle: middle[1..<middle.count],
                 left: FingerTree(),
                 right: right
             ).preface(middle.first!)
 
         case (_, _, .Empty):
             return concatenate(
-                Array(middle[0..<(middle.count - 1)]),
+                middle: middle[0..<(middle.count - 1)],
                 left: left,
                 right: FingerTree()
             ).append(middle.last!)
 
         case let (_, .Single(a, _), _):
             return concatenate(
-                middle,
+                middle: middle,
                 left: FingerTree(),
                 right: right
             ).preface(a)
 
         case let (_, _, .Single(a, _)):
             return concatenate(
-                middle,
+                middle: middle,
                 left: left,
                 right: FingerTree()
             ).append(a)
@@ -167,10 +170,12 @@ enum FingerTree<Element: Measurable, V: Monoid where V == Element.V>
             .Deep(leftPrefix, leftDeeper, leftSuffix, _),
             .Deep(rightPrefix, rightDeeper, rightSuffix, _)
         ):
+
+            let middle = Array(leftSuffix.generate())
             return FingerTree(
                 prefix: leftPrefix,
                 deeper: NodeTree.concatenate(
-                    self.nodes(
+                    middle: self.nodes(
                         leftSuffix.toArray + middle + rightPrefix.toArray
                     )!,
                     left: leftDeeper,
@@ -187,7 +192,7 @@ enum FingerTree<Element: Measurable, V: Monoid where V == Element.V>
     }
 
     func extend(tree: FingerTree<Element, V>) -> FingerTree<Element, V> {
-        return FingerTree.concatenate(left: self, right: tree)
+        return FingerTree.concatenate(middle: [], left: self, right: tree)
     }
 
     internal var computeMeasure: V {
@@ -219,10 +224,8 @@ enum FingerTree<Element: Measurable, V: Monoid where V == Element.V>
         case let .Single(a, _):
             return "{\(a)}"
         case let .Deep(left, deeper, right, _):
-            let deepDesc: String = "\n".join(
-                deeper.description.characters.split("\n")
-                    .map {" " + String($0)}
-            )
+            let deepDesc: String = deeper.description.characters.split("\n")
+                .map {" " + String($0)}.joinWithSeparator("\n")
             return (
                 "[\(self.measure)] {\n" +
                 " \(left.toArray),\n" +
@@ -230,6 +233,80 @@ enum FingerTree<Element: Measurable, V: Monoid where V == Element.V>
                 " \(right.toArray)\n" +
                 "}"
             )
+        }
+    }
+
+    func generate() -> AnyGenerator<Element> {
+        switch self {
+        case .Empty:
+            return anyGenerator(EmptyGenerator())
+        case let .Single(a, _):
+            return anyGenerator(GeneratorOfOne(a))
+        case let .Deep(prefix, deeper, suffix, _):
+            var (prefixGen, deeperGen, suffixGen) = (
+                prefix.generate(),
+                deeper.generate(),
+                suffix.generate()
+            )
+
+            var nodeGen = deeperGen.next()?.generate()
+
+            return anyGenerator {
+                if let value = prefixGen.next() {
+                    return value
+                }
+
+                repeat {
+                    if let value = nodeGen?.next() {
+                        return value
+                    }
+
+                    nodeGen = deeperGen.next()?.generate()
+                } while nodeGen != nil
+
+                if let value = suffixGen.next() {
+                    return value
+                }
+
+                return nil
+            }
+        }
+    }
+
+    func reverse() -> AnyGenerator<Element> {
+        switch self {
+        case .Empty:
+            return anyGenerator(EmptyGenerator())
+        case let .Single(a, _):
+            return anyGenerator(GeneratorOfOne(a))
+        case let .Deep(prefix, deeper, suffix, _):
+            var (prefixGen, deeperGen, suffixGen) = (
+                prefix.reverse().generate(),
+                deeper.reverse(),
+                suffix.reverse().generate()
+            )
+
+            var nodeGen = deeperGen.next()?.generate()
+
+            return anyGenerator {
+                if let value = suffixGen.next() {
+                    return value
+                }
+
+                repeat {
+                    if let value = nodeGen?.next() {
+                        return value
+                    }
+
+                    nodeGen = deeperGen.next()?.generate()
+                } while nodeGen != nil
+
+
+                if let value = prefixGen.next() {
+                    return value
+                }
+                return nil
+            }
         }
     }
 }

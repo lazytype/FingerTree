@@ -24,155 +24,121 @@ enum SplitError: ErrorType {
     case NotFound
 }
 
-class Split<Element: Measurable, V: Monoid where V == Element.V> {
-    let left: FingerTree<Element, V>
-    let element: Element
-    let right: FingerTree<Element, V>
 
-    init(
-        left: FingerTree<Element, V>,
-        element: Element,
-        right: FingerTree<Element, V>
-    ) {
-        self.left = left
-        self.element = element
-        self.right = right
-    }
+func splitTree<Element: Measurable, V: Monoid where V == Element.V>(
+    predicate predicate: V -> Bool,
+    startAnnotation: V,
+    tree: FingerTree<Element, V>
+) throws -> (FingerTree<Element, V>, FingerTree<Element, V>) {
+    switch tree {
+    case .Empty:
+        break
+    case .Single:
+        if predicate(startAnnotation <> tree.measure) {
+            return (FingerTree(), tree)
+        }
+    case let .Deep(prefix, deeper, suffix, _):
+        if !predicate(startAnnotation <> tree.measure) {
+            throw SplitError.NotFound
+        }
 
-    class func split(
-        predicate predicate: V -> Bool,
-        startAnnotation: V,
-        tree: FingerTree<Element, V>
-    ) throws -> Split<Element, V> {
-
-        switch tree {
-        case .Empty:
-            break
-        case let .Single(a, _):
-            if predicate(startAnnotation <> tree.measure) {
-                return Split(
-                    left: FingerTree<Element, V>(),
-                    element: a,
-                    right: FingerTree<Element, V>()
-                )
-            }
-        case let .Deep(prefix, deeper, suffix, _):
-            if !predicate(startAnnotation <> tree.measure) {
-                throw SplitError.NotFound
-            }
-
-            let startToPrefix = startAnnotation <> prefix.measure
-            if predicate(startToPrefix) {
-                if let (before, after) = Split.splitList(
-                    predicate: predicate,
-                    startAnnotation: startAnnotation,
-                    values: prefix
-                ) {
-                    let (first, rest) = after.viewFirst
-
-                    let left: FingerTree<Element, V>
-                    if let affix: Affix = before {
-                        left = affix.toFingerTree
-                    } else {
-                        left = FingerTree()
-                    }
-
-                    return Split(
-                        left: left,
-                        element: first,
-                        right: FingerTree.createDeep(
-                            prefix: rest,
-                            deeper: deeper,
-                            suffix: suffix
-                        )
-                    )
-                }
-            } else if predicate(startToPrefix <> deeper.measure) {
-                let split = try! Split<Node<Element, V>, V>.split(
-                    predicate: predicate,
-                    startAnnotation: startToPrefix,
-                    tree: deeper
-                )
-
-                if let (beforeNode, afterNode) = Split.splitList(
-                    predicate: predicate,
-                    startAnnotation: startToPrefix <> split.left.measure,
-                    values: TreeView.nodeToAffix(split.element)
-                ) {
-                    let (first, rest) = afterNode.viewFirst
-
-                    return Split(
-                        left: FingerTree.createDeep(
-                            prefix: prefix,
-                            deeper: split.left,
-                            suffix: beforeNode
-                        ),
-                        element: first,
-                        right: FingerTree.createDeep(
-                            prefix: rest,
-                            deeper: split.right,
-                            suffix: suffix
-                        )
-                    )
-                }
-            } else if let (before, after) = Split.splitList(
+        let startToPrefix = startAnnotation <> prefix.measure
+        if predicate(startToPrefix) {
+            if let (before, after) = splitList(
                 predicate: predicate,
-                startAnnotation: startToPrefix <> deeper.measure,
-                values: suffix
+                startAnnotation: startAnnotation,
+                values: prefix
             ) {
-                let (first, rest) = after.viewFirst
-
-                let right: FingerTree<Element, V>
-                if let affix: Affix = rest {
-                    right = affix.toFingerTree
+                let left: FingerTree<Element, V>
+                if let affix: Affix = before {
+                    left = affix.toFingerTree
                 } else {
-                    right = FingerTree()
+                    left = FingerTree()
                 }
 
-                return Split(
-                    left: FingerTree.createDeep(
-                        prefix: prefix,
+                return (
+                    left,
+                    FingerTree.createDeep(
+                        prefix: after,
                         deeper: deeper,
-                        suffix: before
-                    ),
-                    element: first,
-                    right: right
+                        suffix: suffix
+                    )
                 )
             }
-        }
+        } else if predicate(startToPrefix <> deeper.measure) {
+            let (left, right) = try! splitTree(
+                predicate: predicate,
+                startAnnotation: startToPrefix,
+                tree: deeper
+            )
 
-        throw SplitError.NotFound
+            let (element, rest) = right.viewLeft!
+
+            if let (beforeNode, afterNode) = splitList(
+                predicate: predicate,
+                startAnnotation: startToPrefix <> left.measure,
+                values: element.toAffix
+            ) {
+                return (
+                    FingerTree.createDeep(
+                        prefix: prefix,
+                        deeper: left,
+                        suffix: beforeNode
+                    ),
+                    FingerTree.createDeep(
+                        prefix: afterNode,
+                        deeper: rest,
+                        suffix: suffix
+                    )
+                )
+            }
+        } else if let (before, after) = splitList(
+            predicate: predicate,
+            startAnnotation: startToPrefix <> deeper.measure,
+            values: suffix
+        ) {
+            return (
+                FingerTree.createDeep(
+                    prefix: prefix,
+                    deeper: deeper,
+                    suffix: before
+                ),
+                after.toFingerTree
+            )
+        }
+    }
+    
+    throw SplitError.NotFound
+}
+
+func splitList<Element: Measurable, V: Monoid where V == Element.V>(
+    predicate predicate: V -> Bool,
+    startAnnotation: V,
+    values: Affix<Element, V>
+) -> (Affix<Element, V>?, Affix<Element, V>)? {
+    let (first, rest) = values.viewFirst
+
+    let start = startAnnotation <> first.measure
+
+    if predicate(start) {
+        return (nil, values)
     }
 
-    private class func splitList(
-        predicate predicate: V -> Bool,
-        startAnnotation: V,
-        values: Affix<Element, V>
-    ) -> (Affix<Element, V>?, Affix<Element, V>)? {
-        let (first, rest) = values.viewFirst
-
-        let start = startAnnotation <> first.measure
-
-        if predicate(start) {
-            return (nil, values)
-        }
-
-        if rest == nil {
-            return nil
-        }
-
-        if let (before, after) = splitList(
-            predicate: predicate,
-            startAnnotation: start,
-            values: rest!
-        ) {
-            if before == nil {
-                return (Affix(first), after)
-            }
-            
-            return (try! before!.preface(first), after)
-        }
-
+    if rest == nil {
         return nil
     }
+
+    if let (before, after) = splitList(
+        predicate: predicate,
+        startAnnotation: start,
+        values: rest!
+    ) {
+        if before == nil {
+            return (Affix(first), after)
+        }
+        
+        return (try! before!.preface(first), after)
+    }
+
+    return nil
 }

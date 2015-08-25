@@ -114,3 +114,14 @@ enum Priority: Monoid {
         return Priority.NegativeInfinity
     }
 }
+
+func ==(lhs: Priority, rhs: Priority) -> Bool {
+    switch (lhs, rhs) {
+    case (.NegativeInfinity, .NegativeInfinity):
+        return true
+    case let (.Value(lvalue), .Value(rvalue)):
+        return lvalue == rvalue
+    default:
+        return false
+    }
+}

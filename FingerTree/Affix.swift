@@ -25,7 +25,7 @@ enum AffixError: ErrorType {
 }
 
 enum Affix<Element: Measurable, V: Monoid where V == Element.V>
-    : CachedMeasurable {
+    : CachedMeasurable, SequenceType {
     indirect case One(Element, CachedValue<V>)
     indirect case Two(Element, Element, CachedValue<V>)
     indirect case Three(Element, Element, Element, CachedValue<V>)
@@ -136,5 +136,9 @@ enum Affix<Element: Measurable, V: Monoid where V == Element.V>
         case let .Four(_, _, _, _, annotation):
             return annotation
         }
+    }
+
+    func generate() -> IndexingGenerator<[Element]> {
+        return self.toArray.generate()
     }
 }

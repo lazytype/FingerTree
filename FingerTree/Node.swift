@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 enum Node<Element: Measurable, V: Monoid where V == Element.V>
-    : CachedMeasurable, CustomStringConvertible {
+    : CachedMeasurable, SequenceType, CustomStringConvertible {
     indirect case Branch2(Element, Element, CachedValue<V>)
     indirect case Branch3(Element, Element, Element, CachedValue<V>)
 
@@ -62,5 +62,9 @@ enum Node<Element: Measurable, V: Monoid where V == Element.V>
 
     var description: String {
         return "[\(self.measure)] \(self.toArray)"
+    }
+
+    func generate() -> IndexingGenerator<[Element]> {
+        return self.toArray.generate()
     }
 }

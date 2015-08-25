@@ -20,49 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-struct TreeView<Element: Measurable, V: Monoid where V == Element.V> {
-    typealias NodeTree = FingerTree<Node<Element, V>, V>
-
-    let element: Element
-    let rest: FingerTree<Element, V>
-
-    init(element: Element, rest: FingerTree<Element, V>) {
-        self.element = element
-        self.rest = rest
-    }
-
-    static func viewLeft(
-        tree: FingerTree<Element, V>
-    ) -> TreeView<Element, V>? {
-        switch tree {
+extension FingerTree {
+    var viewLeft: (Element, FingerTree)? {
+        switch self {
         case .Empty:
             return nil
         case let .Single(a, _):
-            return TreeView<Element, V>(
-                element: a,
-                rest: FingerTree<Element, V>()
-            )
+            return (a, FingerTree())
         case let .Deep(.One(a, _), deeper, suffix, _):
             let rest: FingerTree<Element, V>
 
-            if let view = TreeView<Node<Element, V>, V>.viewLeft(deeper) {
-                rest = FingerTree<Element, V>(
-                    prefix: nodeToAffix(view.element),
-                    deeper: view.rest,
+            if let (element, deeperRest) = deeper.viewLeft {
+                rest = FingerTree(
+                    prefix: element.toAffix,
+                    deeper: deeperRest,
                     suffix: suffix
                 )
             } else {
                 rest = suffix.toFingerTree
             }
 
-            return TreeView<Element, V>(element: a, rest: rest)
+            return (a, rest)
 
         case let .Deep(prefix, deeper, suffix, _):
             let (first, rest) = prefix.viewFirst
 
-            return TreeView<Element, V>(
-                element: first,
-                rest: FingerTree<Element, V>(
+            return (
+                first,
+                FingerTree(
                     prefix: rest!,
                     deeper: deeper,
                     suffix: suffix
@@ -71,54 +56,38 @@ struct TreeView<Element: Measurable, V: Monoid where V == Element.V> {
         }
     }
 
-    static func viewRight(
-        tree: FingerTree<Element, V>
-    ) -> TreeView<Element, V>? {
-        switch tree {
+    var viewRight: (FingerTree, Element)? {
+        switch self {
         case .Empty:
             return nil
         case let .Single(a, _):
-            return TreeView<Element, V>(
-                element: a,
-                rest: FingerTree<Element, V>()
-            )
+            return (FingerTree(), a)
         case let .Deep(prefix, deeper, .One(a, _), _):
             let rest: FingerTree<Element, V>
 
-            if let view = TreeView<Node<Element, V>, V>.viewRight(deeper) {
+            if let (deeperRest, element) = deeper.viewRight {
                 rest = FingerTree(
                     prefix: prefix,
-                    deeper: view.rest,
-                    suffix: nodeToAffix(view.element)
+                    deeper: deeperRest,
+                    suffix: element.toAffix
                 )
             } else {
                 rest = prefix.toFingerTree
             }
 
-            return TreeView<Element, V>(element: a, rest: rest)
+            return (rest, a)
 
         case let .Deep(prefix, deeper, suffix, _):
             let (rest, last) = suffix.viewLast
 
-            return TreeView<Element, V>(
-                element: last,
-                rest: FingerTree<Element, V>(
+            return (
+                FingerTree(
                     prefix: prefix,
                     deeper: deeper,
                     suffix: rest!
-                )
+                ),
+                last
             )
-        }
-    }
-
-    internal static func nodeToAffix(
-        node: Node<Element, V>
-    ) -> Affix<Element, V> {
-        switch node {
-        case let .Branch2(a, b, _):
-            return Affix(a, b)
-        case let .Branch3(a, b, c, _):
-            return Affix(a, b, c)
         }
     }
 }
@@ -152,6 +121,17 @@ extension Affix {
     }
 }
 
+extension Node {
+    var toAffix: Affix<Element, V> {
+        switch self {
+        case let .Branch2(a, b, _):
+            return Affix(a, b)
+        case let .Branch3(a, b, c, _):
+            return Affix(a, b, c)
+        }
+    }
+}
+
 extension FingerTree {
     static func createDeep(
         prefix prefix: Affix<Element, V>?,
@@ -159,31 +139,31 @@ extension FingerTree {
         suffix: Affix<Element, V>?
     ) -> FingerTree {
         if prefix == nil && suffix == nil {
-            if let view = TreeView<Node<Element, V>, V>.viewLeft(deeper) {
+            if let (element, rest) = deeper.viewLeft {
                 return createDeep(
-                    prefix: TreeView.nodeToAffix(view.element),
-                    deeper: view.rest,
+                    prefix: element.toAffix,
+                    deeper: rest,
                     suffix: nil
                 )
             } else {
                 return FingerTree<Element, V>()
             }
         } else if prefix == nil {
-            if let view = TreeView<Node<Element, V>, V>.viewRight(deeper) {
+            if let (rest, element) = deeper.viewRight {
                 return createDeep(
-                    prefix: TreeView.nodeToAffix(view.element),
-                    deeper: view.rest,
+                    prefix: element.toAffix,
+                    deeper: rest,
                     suffix: suffix
                 )
             } else {
                 return suffix!.toFingerTree
             }
         } else if suffix == nil {
-            if let view = TreeView<Node<Element, V>, V>.viewRight(deeper) {
+            if let (rest, element) = deeper.viewRight {
                 return createDeep(
                     prefix: prefix,
-                    deeper: view.rest,
-                    suffix: TreeView.nodeToAffix(view.element)
+                    deeper: rest,
+                    suffix: element.toAffix
                 )
             } else {
                 return prefix!.toFingerTree
