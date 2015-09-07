@@ -20,17 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-enum FingerTree<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
-    : Measurable, CustomStringConvertible {
-    typealias Element = TreeElement<TMeasurable, V>
+enum FingerTree<
+    TValue: Measurable, TAnnotation: Monoid
+    where TAnnotation == TValue.Annotation> : Measurable {
+
+    typealias Element = TreeElement<TValue, TAnnotation>
 
     case Empty
     case Single(Element)
     indirect case Deep(
-        prefix: Affix<TMeasurable, V>,
+        prefix: Affix<TValue, TAnnotation>,
         deeper: FingerTree,
-        suffix: Affix<TMeasurable, V>,
-        V
+        suffix: Affix<TValue, TAnnotation>,
+        TAnnotation
     )
 
     func preface(element: Element) -> FingerTree {
@@ -176,7 +178,7 @@ enum FingerTree<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
             return FingerTree.Deep(
                 prefix: leftPrefix,
                 deeper: FingerTree.concatenate(
-                    middle: self.nodes(
+                    middle: nodes(
                         leftSuffix.toArray + middle + rightPrefix.toArray
                     )!,
                     left: leftDeeper,
@@ -197,33 +199,14 @@ enum FingerTree<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         return FingerTree.concatenate(middle: [], left: self, right: tree)
     }
 
-    var measure: V {
+    var measure: TAnnotation {
         switch self {
         case .Empty:
-            return V.identity
+            return TAnnotation.identity
         case let .Single(a):
             return a.measure
         case let .Deep(_, _, _, annotation):
             return annotation
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .Empty:
-            return "{}"
-        case let .Single(a):
-            return "{\(a)}"
-        case let .Deep(left, deeper, right, _):
-            let deepDesc: String = deeper.description.characters.split("\n")
-                .map {" " + String($0)}.joinWithSeparator("\n")
-            return (
-                "[\(self.measure)] {\n" +
-                " \(left.toArray),\n" +
-                deepDesc + ",\n" +
-                " \(right.toArray)\n" +
-                "}"
-            )
         }
     }
 
@@ -293,10 +276,7 @@ enum FingerTree<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
                 } while nodeGen != nil
 
 
-                if let value = prefixGen.next() {
-                    return value
-                }
-                return nil
+                return prefixGen.next()
             }
         }
     }

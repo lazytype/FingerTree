@@ -97,7 +97,7 @@ extension FingerTree {
 }
 
 extension Affix {
-    var toFingerTree: FingerTree<TMeasurable, V> {
+    var toFingerTree: FingerTree<TValue, TAnnotation> {
         switch self {
         case let .One(a):
             return FingerTree.Single(a)
@@ -127,7 +127,7 @@ extension Affix {
 }
 
 extension Node {
-    var toAffix: Affix<TMeasurable, V> {
+    var toAffix: Affix<TValue, TAnnotation> {
         switch self {
         case let .Branch2(a, b, annotation):
             return Affix.Two(a, b, annotation)
@@ -139,9 +139,9 @@ extension Node {
 
 extension FingerTree {
     static func createDeep(
-        prefix prefix: Affix<TMeasurable, V>?,
+        prefix prefix: Affix<TValue, TAnnotation>?,
         deeper: FingerTree,
-        suffix: Affix<TMeasurable, V>?
+        suffix: Affix<TValue, TAnnotation>?
     ) -> FingerTree {
         if prefix == nil && suffix == nil {
             if let (element, rest) = deeper.viewLeft {

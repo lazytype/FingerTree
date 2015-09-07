@@ -36,10 +36,9 @@ public struct ImmutableCollection<T>: CollectionType {
     }
 
     public subscript(position: Int) -> T {
-        let (_, right) = try! splitTree(
+        let (_, right) = try! tree.split(
             predicate: {$0.value > position && position >= 0},
-            startAnnotation: Size.identity,
-            tree: self.tree
+            startAnnotation: Size.identity
         )
 
         let (element, _) = right.viewLeft!
@@ -58,79 +57,101 @@ public struct ImmutableCollection<T>: CollectionType {
         )
     }
 
-//    func insert(element: T, atIndex: Int) -> ImmutableCollection<T>  {
-//        do {
-//            let (left, right) = try splitTree(
-//                predicate: {$0.value > atIndex && atIndex >= 0},
-//                startAnnotation: Size.identity,
-//                tree: self.tree
-//            )
-//
-//            let tree = FingerTree.concatenate(
-//                middle: [Value(element)],
-//                left: left,
-//                right: right
-//            )
-//
-//            return ImmutableCollection(tree)
-//        } catch {
-//            return ImmutableCollection(FingerTree(Value(element)))
-//        }
-//    }
+    public func preface(element: T) -> ImmutableCollection<T> {
+        return ImmutableCollection(tree.preface(Value(element).toElement))
+    }
+
+    public func append(element: T) -> ImmutableCollection<T> {
+        return ImmutableCollection(tree.append(Value(element).toElement))
+    }
+
+    func insert(element: T, atIndex: Int) -> ImmutableCollection<T>  {
+        do {
+            let (left, right) = try tree.split(
+                predicate: {$0.value > atIndex && atIndex >= 0},
+                startAnnotation: Size.identity
+            )
+
+            let newTree = FingerTree.concatenate(
+                middle: [Value(element).toElement],
+                left: left,
+                right: right
+            )
+
+            return ImmutableCollection(newTree)
+        } catch {
+            return ImmutableCollection(
+                FingerTree.Single(Value(element).toElement)
+            )
+        }
+    }
 }
 
-//public struct PriorityQueue<T> {
-//    let tree: FingerTree<Prioritized<T>, Priority>
-//    
-//    init(_ tree: FingerTree<Prioritized<T>, Priority>) {
-//        self.tree = tree
-//    }
-//
-//    public func pop() -> (T, PriorityQueue<T>) {
-//        let (left, right) = try! splitTree(
-//            predicate: {$0 == self.tree.measure},
-//            startAnnotation: Priority.NegativeInfinity,
-//            tree: self.tree
-//        )
-//
-//        let (element, rest) = right.viewLeft!
-//
-//        let newTree = left.extend(rest) // wrong!
-//
-//        return (element.value, PriorityQueue(newTree))
-//    }
-//
-//    public func push(element: T, value: Int) -> PriorityQueue<T> {
-//        let prioritized = Prioritized(element, priority: value)
-//        let newTree: FingerTree<Prioritized<T>, Priority>
-//
-//        switch self.tree {
-//        case .Empty:
-//            newTree = FingerTree(prioritized)
-//        case let .Single(a, _):
-//            newTree = FingerTree.createDeep(
-//                prefix: Affix(a),
-//                deeper: FingerTree.Empty,
-//                suffix: Affix(prioritized)
-//            )
-//        case let .Deep(prefix, deeper, suffix, _):
-//            switch prefix {
-//            case let .Four(a, b, c, d, _):
-//                newTree = FingerTree(
-//                    prefix: Affix(prioritized, a),
-//                    deeper: deeper.preface(Node(b,c,d)),
-//                    suffix: suffix
-//                )
-//            default:
-//                newTree = FingerTree(
-//                    prefix: try! prefix.preface(prioritized),
-//                    deeper: deeper,
-//                    suffix: suffix
-//                )
-//            }
-//        }
-//
-//        return PriorityQueue(newTree)
-//    }
-//}
-//
+public struct PriorityQueue<T> {
+    let tree: FingerTree<Prioritized<T>, Priority>
+
+    init(_ tree: FingerTree<Prioritized<T>, Priority>) {
+        self.tree = tree
+    }
+
+    public func pop() -> (T, PriorityQueue<T>) {
+        let (left, right) = try! tree.split(
+            predicate: {$0 == self.tree.measure},
+            startAnnotation: Priority.NegativeInfinity
+        )
+
+        let (element, rest) = right.viewLeft!
+
+        let newTree = left.extend(rest) // wrong!
+
+        return (element.value!.value, PriorityQueue(newTree))
+    }
+
+    public func push(element: T, value: Int) -> PriorityQueue<T> {
+        let prioritized = Prioritized(element, priority: value)
+        let newTree: FingerTree<Prioritized<T>, Priority>
+
+        switch tree {
+        case .Empty:
+            newTree = FingerTree<Prioritized<T>, Priority>.Single(
+                prioritized.toElement
+            )
+        case let .Single(a):
+            newTree = FingerTree.createDeep(
+                prefix: Affix<Prioritized<T>, Priority>.One(a),
+                deeper: FingerTree<Prioritized<T>, Priority>.Empty,
+                suffix: Affix<Prioritized<T>, Priority>.One(
+                    prioritized.toElement
+                )
+            )
+        case let .Deep(prefix, deeper, suffix, annotation):
+            switch prefix {
+            case let .Four(a, b, c, d, _):
+                newTree = FingerTree<Prioritized<T>, Priority>.Deep(
+                    prefix: Affix.Two(
+                        prioritized.toElement,
+                        a,
+                        prioritized.measure <> a.measure
+                    ),
+                    deeper: deeper.preface(
+                        Node.Branch3(
+                            b, c, d,
+                            b.measure <> c.measure <> d.measure
+                        ).toElement
+                    ),
+                    suffix: suffix,
+                    prioritized.measure <> annotation
+                )
+            default:
+                newTree = FingerTree.Deep(
+                    prefix: try! prefix.preface(prioritized.toElement),
+                    deeper: deeper,
+                    suffix: suffix,
+                    prioritized.measure <> annotation
+                )
+            }
+        }
+
+        return PriorityQueue(newTree)
+    }
+}

@@ -26,17 +26,20 @@ protocol Monoid {
 }
 
 infix operator <> { associativity left precedence 140 }
-internal func <><V: Monoid>(lhs: V, rhs: V) -> V {
+internal func <> <TAnnotation: Monoid>(
+    lhs: TAnnotation,
+    rhs: TAnnotation
+) -> TAnnotation {
     return lhs.append(rhs)
 }
 
 internal protocol Measurable {
-    typealias V: Monoid
-    var measure: V {get}
+    typealias Annotation: Monoid
+    var measure: Annotation {get}
 }
 
 struct Value<T>: Measurable, CustomStringConvertible {
-    typealias V = Size
+    typealias Annotation = Size
 
     let value: T
 
@@ -49,12 +52,12 @@ struct Value<T>: Measurable, CustomStringConvertible {
     }
 
     var description: String {
-        return "'\(self.value)'"
+        return "'\(value)'"
     }
 }
 
 extension Measurable {
-    var toElement: TreeElement<Self, V> {
+    var toElement: TreeElement<Self, Annotation> {
         return TreeElement.AValue(self)
     }
 }
@@ -69,7 +72,7 @@ struct Size: Monoid, CustomStringConvertible {
     }
 
     func append(other: Size) -> Size {
-        return Size(self.value + other.value)
+        return Size(value + other.value)
     }
 
     static var identity: Size {
@@ -77,12 +80,12 @@ struct Size: Monoid, CustomStringConvertible {
     }
 
     var description: String {
-        return "\(self.value)"
+        return "\(value)"
     }
 }
 
 struct Prioritized<T>: Measurable {
-    typealias V = Priority
+    typealias Annotation = Priority
 
     let value: T
     let priority: Int
@@ -93,7 +96,7 @@ struct Prioritized<T>: Measurable {
     }
 
     var measure: Priority {
-        return Priority.Value(self.priority)
+        return Priority.Value(priority)
     }
 }
 
@@ -121,7 +124,7 @@ enum Priority: Monoid {
     }
 }
 
-func ==(lhs: Priority, rhs: Priority) -> Bool {
+func == (lhs: Priority, rhs: Priority) -> Bool {
     switch (lhs, rhs) {
     case (.NegativeInfinity, .NegativeInfinity):
         return true

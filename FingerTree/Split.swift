@@ -24,121 +24,120 @@ enum SplitError: ErrorType {
     case NotFound
 }
 
-
-func splitTree<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>(
-    predicate predicate: V -> Bool,
-    startAnnotation: V,
-    tree: FingerTree<TMeasurable, V>
-) throws -> (FingerTree<TMeasurable, V>, FingerTree<TMeasurable, V>) {
-    switch tree {
-    case .Empty:
-        break
-    case .Single:
-        if predicate(startAnnotation <> tree.measure) {
-            return (FingerTree.Empty, tree)
-        }
-    case let .Deep(prefix, deeper, suffix, _):
-        if !predicate(startAnnotation <> tree.measure) {
-            throw SplitError.NotFound
-        }
-
-        let startToPrefix = startAnnotation <> prefix.measure
-        if predicate(startToPrefix) {
-            if let (before, after) = splitList(
-                predicate: predicate,
-                startAnnotation: startAnnotation,
-                values: prefix
-            ) {
-                let left: FingerTree<TMeasurable, V>
-                if let affix: Affix = before {
-                    left = affix.toFingerTree
-                } else {
-                    left = FingerTree.Empty
-                }
-
-                return (
-                    left,
-                    FingerTree.createDeep(
-                        prefix: after,
-                        deeper: deeper,
-                        suffix: suffix
-                    )
-                )
+extension FingerTree {
+    func split(
+        predicate predicate: TAnnotation -> Bool,
+        startAnnotation: TAnnotation
+    ) throws -> (FingerTree, FingerTree) {
+        switch self {
+        case .Empty:
+            break
+        case .Single:
+            if predicate(startAnnotation <> measure) {
+                return (FingerTree.Empty, self)
             }
-        } else if predicate(startToPrefix <> deeper.measure) {
-            let (left, right) = try! splitTree(
-                predicate: predicate,
-                startAnnotation: startToPrefix,
-                tree: deeper
-            )
+        case let .Deep(prefix, deeper, suffix, _):
+            if !predicate(startAnnotation <> measure) {
+                throw SplitError.NotFound
+            }
 
-            let (element, rest) = right.viewLeft!
+            let startToPrefix = startAnnotation <> prefix.measure
+            if predicate(startToPrefix) {
+                if let (before, after) = FingerTree.splitList(
+                    predicate: predicate,
+                    startAnnotation: startAnnotation,
+                    values: prefix
+                ) {
+                    let left: FingerTree
+                    if let affix: Affix = before {
+                        left = affix.toFingerTree
+                    } else {
+                        left = FingerTree.Empty
+                    }
 
-            if let (beforeNode, afterNode) = splitList(
+                    return (
+                        left,
+                        FingerTree.createDeep(
+                            prefix: after,
+                            deeper: deeper,
+                            suffix: suffix
+                        )
+                    )
+                }
+            } else if predicate(startToPrefix <> deeper.measure) {
+                let (left, right) = try! deeper.split(
+                    predicate: predicate,
+                    startAnnotation: startToPrefix
+                )
+
+                let (element, rest) = right.viewLeft!
+
+                if let (beforeNode, afterNode) = FingerTree.splitList(
+                    predicate: predicate,
+                    startAnnotation: startToPrefix <> left.measure,
+                    values: element.node!.toAffix
+                ) {
+                    return (
+                        FingerTree.createDeep(
+                            prefix: prefix,
+                            deeper: left,
+                            suffix: beforeNode
+                        ),
+                        FingerTree.createDeep(
+                            prefix: afterNode,
+                            deeper: rest,
+                            suffix: suffix
+                        )
+                    )
+                }
+            } else if let (before, after) = FingerTree.splitList(
                 predicate: predicate,
-                startAnnotation: startToPrefix <> left.measure,
-                values: element.node!.toAffix
+                startAnnotation: startToPrefix <> deeper.measure,
+                values: suffix
             ) {
                 return (
                     FingerTree.createDeep(
                         prefix: prefix,
-                        deeper: left,
-                        suffix: beforeNode
+                        deeper: deeper,
+                        suffix: before
                     ),
-                    FingerTree.createDeep(
-                        prefix: afterNode,
-                        deeper: rest,
-                        suffix: suffix
-                    )
+                    after.toFingerTree
                 )
             }
-        } else if let (before, after) = splitList(
-            predicate: predicate,
-            startAnnotation: startToPrefix <> deeper.measure,
-            values: suffix
-        ) {
-            return (
-                FingerTree.createDeep(
-                    prefix: prefix,
-                    deeper: deeper,
-                    suffix: before
-                ),
-                after.toFingerTree
-            )
         }
+
+        throw SplitError.NotFound
     }
 
-    throw SplitError.NotFound
-}
+    private static func splitList(
+        predicate predicate: TAnnotation -> Bool,
+        startAnnotation: TAnnotation,
+        values: Affix<TValue, TAnnotation>
+    ) -> (Affix<TValue, TAnnotation>?, Affix<TValue, TAnnotation>)? {
+        let (first, rest) = values.viewFirst
 
-func splitList<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>(
-    predicate predicate: V -> Bool,
-    startAnnotation: V,
-    values: Affix<TMeasurable, V>
-) -> (Affix<TMeasurable, V>?, Affix<TMeasurable, V>)? {
-    let (first, rest) = values.viewFirst
+        let start = startAnnotation <> first.measure
 
-    let start = startAnnotation <> first.measure
+        if predicate(start) {
+            return (nil, values)
+        }
 
-    if predicate(start) {
-        return (nil, values)
-    }
+        if rest == nil {
+            return nil
+        }
 
-    if rest == nil {
+        if let (before, after) = splitList(
+            predicate: predicate,
+            startAnnotation: start,
+            values: rest!
+        ) {
+            if before == nil {
+                return (Affix.One(first), after)
+            }
+
+            return (try! before!.preface(first), after)
+        }
+
         return nil
     }
-
-    if let (before, after) = splitList(
-        predicate: predicate,
-        startAnnotation: start,
-        values: rest!
-    ) {
-        if before == nil {
-            return (Affix.One(first), after)
-        }
-        
-        return (try! before!.preface(first), after)
-    }
-
-    return nil
 }

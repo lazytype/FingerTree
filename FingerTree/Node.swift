@@ -20,12 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-enum TreeElement<TMeasurable: Measurable, V where V == TMeasurable.V>
-    : Measurable {
-    case AValue(TMeasurable)
-    case ANode(Node<TMeasurable, V>)
+enum TreeElement<
+    TValue: Measurable, TAnnotation
+    where TAnnotation == TValue.Annotation>: Measurable {
 
-    var node: Node<TMeasurable, V>? {
+    case AValue(TValue)
+    case ANode(Node<TValue, TAnnotation>)
+
+    var node: Node<TValue, TAnnotation>? {
         if case let .ANode(node) = self {
             return node
         }
@@ -33,7 +35,7 @@ enum TreeElement<TMeasurable: Measurable, V where V == TMeasurable.V>
         return nil
     }
 
-    var value: TMeasurable? {
+    var value: TValue? {
         if case let .AValue(value) = self {
             return value
         }
@@ -41,7 +43,7 @@ enum TreeElement<TMeasurable: Measurable, V where V == TMeasurable.V>
         return nil
     }
 
-    var measure: V {
+    var measure: TAnnotation {
         switch self {
         case let .ANode(node):
             return node.measure
@@ -51,12 +53,13 @@ enum TreeElement<TMeasurable: Measurable, V where V == TMeasurable.V>
     }
 }
 
-enum Node<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
-    : Measurable, SequenceType, CustomStringConvertible {
-    typealias Element = TreeElement<TMeasurable, V>
+enum Node<
+    TValue: Measurable, TAnnotation: Monoid
+    where TAnnotation == TValue.Annotation>: Measurable, SequenceType {
+    typealias Element = TreeElement<TValue, TAnnotation>
 
-    indirect case Branch2(Element, Element, V)
-    indirect case Branch3(Element, Element, Element, V)
+    indirect case Branch2(Element, Element, TAnnotation)
+    indirect case Branch3(Element, Element, Element, TAnnotation)
 
     private var toArray: [Element] {
         switch self {
@@ -67,7 +70,7 @@ enum Node<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         }
     }
 
-    var measure: V {
+    var measure: TAnnotation {
         switch self {
         case let .Branch2(_, _, annotation):
             return annotation
@@ -80,11 +83,7 @@ enum Node<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         return Element.ANode(self)
     }
 
-    var description: String {
-        return "[\(self.measure)] \(self.toArray)"
-    }
-
     func generate() -> IndexingGenerator<[Element]> {
-        return self.toArray.generate()
+        return toArray.generate()
     }
 }

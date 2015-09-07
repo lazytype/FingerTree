@@ -24,16 +24,18 @@ enum AffixError: ErrorType {
     case TooLarge
 }
 
-enum Affix<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
-    : Measurable, SequenceType {
-    typealias Element = TreeElement<TMeasurable, V>
+enum Affix<
+    TValue: Measurable, TAnnotation: Monoid
+    where TAnnotation == TValue.Annotation>: Measurable, SequenceType {
+    
+    typealias Element = TreeElement<TValue, TAnnotation>
 
     case One(Element)
-    case Two(Element, Element, V)
-    case Three(Element, Element, Element, V)
-    case Four(Element, Element, Element, Element, V)
+    case Two(Element, Element, TAnnotation)
+    case Three(Element, Element, Element, TAnnotation)
+    case Four(Element, Element, Element, Element, TAnnotation)
 
-    func preface(element: Element) throws -> Affix<TMeasurable, V> {
+    func preface(element: Element) throws -> Affix<TValue, TAnnotation> {
         switch self {
         case let .One(a):
             return Affix.Two(element, a, element.measure <> a.measure)
@@ -46,7 +48,7 @@ enum Affix<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         }
     }
 
-    func append(element: Element) throws -> Affix<TMeasurable, V> {
+    func append(element: Element) throws -> Affix<TValue, TAnnotation> {
         switch self {
         case let .One(a):
             return Affix.Two(a, element, a.measure <> element.measure)
@@ -59,7 +61,7 @@ enum Affix<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         }
     }
 
-    var viewFirst: (Element, Affix<TMeasurable, V>?) {
+    var viewFirst: (Element, Affix<TValue, TAnnotation>?) {
         switch self {
         case let .One(a):
             return (a, nil)
@@ -72,7 +74,7 @@ enum Affix<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         }
     }
 
-    var viewLast: (Affix<TMeasurable, V>?, Element) {
+    var viewLast: (Affix<TValue, TAnnotation>?, Element) {
         switch self {
         case let .One(a):
             return (nil, a)
@@ -98,7 +100,7 @@ enum Affix<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
         }
     }
 
-    var measure: V {
+    var measure: TAnnotation {
         switch self {
         case let .One(a):
             return a.measure
@@ -112,6 +114,6 @@ enum Affix<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
     }
 
     func generate() -> IndexingGenerator<[Element]> {
-        return self.toArray.generate()
+        return toArray.generate()
     }
 }
