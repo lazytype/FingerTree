@@ -25,17 +25,17 @@ enum SplitError: ErrorType {
 }
 
 
-func splitTree<Element: Measurable, V: Monoid where V == Element.V>(
+func splitTree<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>(
     predicate predicate: V -> Bool,
     startAnnotation: V,
-    tree: FingerTree<Element, V>
-) throws -> (FingerTree<Element, V>, FingerTree<Element, V>) {
+    tree: FingerTree<TMeasurable, V>
+) throws -> (FingerTree<TMeasurable, V>, FingerTree<TMeasurable, V>) {
     switch tree {
     case .Empty:
         break
     case .Single:
         if predicate(startAnnotation <> tree.measure) {
-            return (FingerTree(), tree)
+            return (FingerTree.Empty, tree)
         }
     case let .Deep(prefix, deeper, suffix, _):
         if !predicate(startAnnotation <> tree.measure) {
@@ -49,11 +49,11 @@ func splitTree<Element: Measurable, V: Monoid where V == Element.V>(
                 startAnnotation: startAnnotation,
                 values: prefix
             ) {
-                let left: FingerTree<Element, V>
+                let left: FingerTree<TMeasurable, V>
                 if let affix: Affix = before {
                     left = affix.toFingerTree
                 } else {
-                    left = FingerTree()
+                    left = FingerTree.Empty
                 }
 
                 return (
@@ -77,7 +77,7 @@ func splitTree<Element: Measurable, V: Monoid where V == Element.V>(
             if let (beforeNode, afterNode) = splitList(
                 predicate: predicate,
                 startAnnotation: startToPrefix <> left.measure,
-                values: element.toAffix
+                values: element.node!.toAffix
             ) {
                 return (
                     FingerTree.createDeep(
@@ -107,15 +107,15 @@ func splitTree<Element: Measurable, V: Monoid where V == Element.V>(
             )
         }
     }
-    
+
     throw SplitError.NotFound
 }
 
-func splitList<Element: Measurable, V: Monoid where V == Element.V>(
+func splitList<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>(
     predicate predicate: V -> Bool,
     startAnnotation: V,
-    values: Affix<Element, V>
-) -> (Affix<Element, V>?, Affix<Element, V>)? {
+    values: Affix<TMeasurable, V>
+) -> (Affix<TMeasurable, V>?, Affix<TMeasurable, V>)? {
     let (first, rest) = values.viewFirst
 
     let start = startAnnotation <> first.measure
@@ -134,7 +134,7 @@ func splitList<Element: Measurable, V: Monoid where V == Element.V>(
         values: rest!
     ) {
         if before == nil {
-            return (Affix(first), after)
+            return (Affix.One(first), after)
         }
         
         return (try! before!.preface(first), after)

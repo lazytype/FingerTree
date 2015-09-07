@@ -24,7 +24,7 @@ import XCTest
 
 class AffixOneTest: XCTestCase {
     var affix: Affix<Value<Character>, Size> {
-        return Affix(Value("a"))
+        return Affix.One(Value("a").toElement)
     }
 
     var array: [Character] {
@@ -32,35 +32,38 @@ class AffixOneTest: XCTestCase {
     }
 
     func testToArray() {
-        XCTAssertEqual(affix.toArray.map {$0.value}, array)
+        XCTAssertEqual(affix.toArray.map {$0.value!.value}, array)
     }
 
     func testPreface() {
         var array = affix.toArray
-        array.insert(Value("x"), atIndex: 0)
+        array.insert(Value("x").toElement, atIndex: 0)
 
         XCTAssertEqual(
-            try! affix.preface(Value("x")).toArray.map {$0.value},
-            array.map {$0.value}
+            try! affix.preface(Value("x").toElement)
+                .toArray.map {$0.value!.value},
+            array.map {$0.value!.value}
         )
     }
 
     func testAppend() {
         var array = affix.toArray
-        array.append(Value("x"))
+        array.append(Value("x").toElement)
 
         XCTAssertEqual(
-            try! affix.append(Value("x")).toArray.map {$0.value},
-            array.map {$0.value}
+            try! affix.append(Value("x").toElement)
+                .toArray.map {$0.value!.value},
+            array.map {$0.value!.value}
         )
     }
 }
 
 class AffixTwoTest: AffixOneTest {
     override var affix: Affix<Value<Character>, Size> {
-        return Affix(
-            Value("a"),
-            Value("b")
+        return Affix.Two(
+            Value("a").toElement,
+            Value("b").toElement,
+            Size(2)
         )
     }
 
@@ -69,13 +72,18 @@ class AffixTwoTest: AffixOneTest {
     }
 
     override func testToArray() {
-        XCTAssertEqual(affix.toArray.map {$0.value}, ["a", "b"])
+        XCTAssertEqual(affix.toArray.map {$0.value!.value}, ["a", "b"])
     }
 }
 
 class AffixThreeTest: AffixOneTest {
     override var affix: Affix<Value<Character>, Size> {
-        return Affix(Value("a"), Value("b"), Value("c"))
+        return Affix.Three(
+            Value("a").toElement,
+            Value("b").toElement,
+            Value("c").toElement,
+            Size(3)
+        )
     }
 
     override var array: [Character] {
@@ -85,7 +93,13 @@ class AffixThreeTest: AffixOneTest {
 
 class AffixFourTest: AffixOneTest {
     override var affix: Affix<Value<Character>, Size> {
-        return Affix(Value("a"), Value("b"), Value("c"),Value("d"))
+        return Affix.Four(
+            Value("a").toElement,
+            Value("b").toElement,
+            Value("c").toElement,
+            Value("d").toElement,
+            Size(4)
+        )
     }
 
     override var array: [Character] {
@@ -94,7 +108,7 @@ class AffixFourTest: AffixOneTest {
 
     override func testPreface() {
         do {
-            try affix.preface(Value("x"))
+            try affix.preface(Value("x").toElement)
         } catch AffixError.TooLarge {
             return
         } catch {}
@@ -104,7 +118,7 @@ class AffixFourTest: AffixOneTest {
 
     override func testAppend() {
         do {
-            try affix.append(Value("x"))
+            try affix.append(Value("x").toElement)
         } catch AffixError.TooLarge {
             return
         } catch {}
@@ -116,17 +130,18 @@ class AffixFourTest: AffixOneTest {
 class AffixTest: XCTestCase {
     func testViewFirst() {
         let array = ["a", "b", "c", "d"]
-        var affix: Affix? = Affix(
-            Value("a"),
-            Value("b"),
-            Value("c"),
-            Value("d")
+        var affix: Affix? = Affix.Four(
+            Value("a").toElement,
+            Value("b").toElement,
+            Value("c").toElement,
+            Value("d").toElement,
+            Size(4)
         )
         for value in array {
             let (first, rest) = affix!.viewFirst
 
             affix = rest
-            XCTAssert(value == first.value)
+            XCTAssert(value == first.value!.value)
         }
 
         XCTAssert(affix == nil)
@@ -134,19 +149,20 @@ class AffixTest: XCTestCase {
 
     func testViewLast() {
         let array = ["a", "b", "c", "d"]
-        var affix: Affix? = Affix(
-            Value("a"),
-            Value("b"),
-            Value("c"),
-            Value("d")
+        var affix: Affix? = Affix.Four(
+            Value("a").toElement,
+            Value("b").toElement,
+            Value("c").toElement,
+            Value("d").toElement,
+            Size(4)
         )
         for value in array.reverse() {
             let (rest, last) = affix!.viewLast
             
             affix = rest
-            XCTAssert(value == last.value)
+            XCTAssert(value == last.value!.value)
         }
-        
+
         XCTAssert(affix == nil)
     }
 }

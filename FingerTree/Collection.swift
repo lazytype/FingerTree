@@ -25,7 +25,7 @@ public struct ImmutableCollection<T>: CollectionType {
 
     private let tree: FingerTree<Value<T>, Size>
 
-    init(_ tree: FingerTree<Value<T>, Size> = FingerTree()) {
+    init(_ tree: FingerTree<Value<T>, Size> = FingerTree.Empty) {
         self.tree = tree
     }
 
@@ -43,106 +43,94 @@ public struct ImmutableCollection<T>: CollectionType {
         )
 
         let (element, _) = right.viewLeft!
-        return element.value
+        return element.value!.value
     }
 
     public func generate() -> AnyGenerator<T> {
-        let generator = tree.generate()
-
-        return anyGenerator {
-            if let nextElement = generator.next() {
-                return nextElement.value
-            }
-
-            return nil
-        }
+        return anyGenerator(
+            tree.generate().lazy.map {$0.value!.value}.generate()
+        )
     }
 
     public func reverse() -> AnyGenerator<T> {
-        let reversed = tree.reverse()
-
-        return anyGenerator {
-            if let nextElement = reversed.next() {
-                return nextElement.value
-            }
-
-            return nil
-        }
-    }
-
-    func insert(element: T, atIndex: Int) -> ImmutableCollection<T>  {
-        do {
-            let (left, right) = try splitTree(
-                predicate: {$0.value > atIndex && atIndex >= 0},
-                startAnnotation: Size.identity,
-                tree: self.tree
-            )
-
-            let tree = FingerTree.concatenate(
-                middle: [Value(element)],
-                left: left,
-                right: right
-            )
-
-            return ImmutableCollection(tree)
-        } catch {
-            return ImmutableCollection(FingerTree(Value(element)))
-        }
-    }
-}
-
-public struct PriorityQueue<T> {
-    let tree: FingerTree<Prioritized<T>, Priority>
-    
-    init(_ tree: FingerTree<Prioritized<T>, Priority>) {
-        self.tree = tree
-    }
-
-    public func pop() -> (T, PriorityQueue<T>) {
-        let (left, right) = try! splitTree(
-            predicate: {$0 == self.tree.measure},
-            startAnnotation: Priority.NegativeInfinity,
-            tree: self.tree
+        return anyGenerator(
+            tree.reverse().lazy.map {$0.value!.value}.generate()
         )
-
-        let (element, rest) = right.viewLeft!
-
-        let newTree = left.extend(rest) // wrong!
-
-        return (element.value, PriorityQueue(newTree))
     }
 
-    public func push(element: T, value: Int) -> PriorityQueue<T> {
-        let prioritized = Prioritized(element, priority: value)
-        let newTree: FingerTree<Prioritized<T>, Priority>
-
-        switch self.tree {
-        case .Empty:
-            newTree = FingerTree(prioritized)
-        case let .Single(a, _):
-            newTree = FingerTree.createDeep(
-                prefix: Affix(a),
-                deeper: FingerTree(),
-                suffix: Affix(prioritized)
-            )
-        case let .Deep(prefix, deeper, suffix, _):
-            switch prefix {
-            case let .Four(a, b, c, d, _):
-                newTree = FingerTree(
-                    prefix: Affix(prioritized, a),
-                    deeper: deeper.preface(Node(b,c,d)),
-                    suffix: suffix
-                )
-            default:
-                newTree = FingerTree(
-                    prefix: try! prefix.preface(prioritized),
-                    deeper: deeper,
-                    suffix: suffix
-                )
-            }
-        }
-
-        return PriorityQueue(newTree)
-    }
+//    func insert(element: T, atIndex: Int) -> ImmutableCollection<T>  {
+//        do {
+//            let (left, right) = try splitTree(
+//                predicate: {$0.value > atIndex && atIndex >= 0},
+//                startAnnotation: Size.identity,
+//                tree: self.tree
+//            )
+//
+//            let tree = FingerTree.concatenate(
+//                middle: [Value(element)],
+//                left: left,
+//                right: right
+//            )
+//
+//            return ImmutableCollection(tree)
+//        } catch {
+//            return ImmutableCollection(FingerTree(Value(element)))
+//        }
+//    }
 }
 
+//public struct PriorityQueue<T> {
+//    let tree: FingerTree<Prioritized<T>, Priority>
+//    
+//    init(_ tree: FingerTree<Prioritized<T>, Priority>) {
+//        self.tree = tree
+//    }
+//
+//    public func pop() -> (T, PriorityQueue<T>) {
+//        let (left, right) = try! splitTree(
+//            predicate: {$0 == self.tree.measure},
+//            startAnnotation: Priority.NegativeInfinity,
+//            tree: self.tree
+//        )
+//
+//        let (element, rest) = right.viewLeft!
+//
+//        let newTree = left.extend(rest) // wrong!
+//
+//        return (element.value, PriorityQueue(newTree))
+//    }
+//
+//    public func push(element: T, value: Int) -> PriorityQueue<T> {
+//        let prioritized = Prioritized(element, priority: value)
+//        let newTree: FingerTree<Prioritized<T>, Priority>
+//
+//        switch self.tree {
+//        case .Empty:
+//            newTree = FingerTree(prioritized)
+//        case let .Single(a, _):
+//            newTree = FingerTree.createDeep(
+//                prefix: Affix(a),
+//                deeper: FingerTree.Empty,
+//                suffix: Affix(prioritized)
+//            )
+//        case let .Deep(prefix, deeper, suffix, _):
+//            switch prefix {
+//            case let .Four(a, b, c, d, _):
+//                newTree = FingerTree(
+//                    prefix: Affix(prioritized, a),
+//                    deeper: deeper.preface(Node(b,c,d)),
+//                    suffix: suffix
+//                )
+//            default:
+//                newTree = FingerTree(
+//                    prefix: try! prefix.preface(prioritized),
+//                    deeper: deeper,
+//                    suffix: suffix
+//                )
+//            }
+//        }
+//
+//        return PriorityQueue(newTree)
+//    }
+//}
+//

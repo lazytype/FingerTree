@@ -20,18 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-enum Node<Element: Measurable, V: Monoid where V == Element.V>
-    : CachedMeasurable, SequenceType, CustomStringConvertible {
-    indirect case Branch2(Element, Element, CachedValue<V>)
-    indirect case Branch3(Element, Element, Element, CachedValue<V>)
+enum TreeElement<TMeasurable: Measurable, V where V == TMeasurable.V>
+    : Measurable {
+    case AValue(TMeasurable)
+    case ANode(Node<TMeasurable, V>)
 
-    init(_ a: Element, _ b: Element) {
-        self = Node.Branch2(a, b, CachedValue())
+    var node: Node<TMeasurable, V>? {
+        if case let .ANode(node) = self {
+            return node
+        }
+
+        return nil
     }
 
-    init(_ a: Element, _ b: Element, _ c: Element) {
-        self = Node.Branch3(a, b, c, CachedValue())
+    var value: TMeasurable? {
+        if case let .AValue(value) = self {
+            return value
+        }
+
+        return nil
     }
+
+    var measure: V {
+        switch self {
+        case let .ANode(node):
+            return node.measure
+        case let .AValue(value):
+            return value.measure
+        }
+    }
+}
+
+enum Node<TMeasurable: Measurable, V: Monoid where V == TMeasurable.V>
+    : Measurable, SequenceType, CustomStringConvertible {
+    typealias Element = TreeElement<TMeasurable, V>
+
+    indirect case Branch2(Element, Element, V)
+    indirect case Branch3(Element, Element, Element, V)
 
     private var toArray: [Element] {
         switch self {
@@ -42,22 +67,17 @@ enum Node<Element: Measurable, V: Monoid where V == Element.V>
         }
     }
 
-    internal var computeMeasure: V {
-        switch self {
-        case let .Branch2(a, b, _):
-            return a.measure <> b.measure
-        case let .Branch3(a, b, c, _):
-            return a.measure <> b.measure <> c.measure
-        }
-    }
-
-    var cachedMeasure: CachedValue<V> {
+    var measure: V {
         switch self {
         case let .Branch2(_, _, annotation):
             return annotation
         case let .Branch3(_, _, _, annotation):
             return annotation
         }
+    }
+
+    var toElement: Element {
+        return Element.ANode(self)
     }
 
     var description: String {

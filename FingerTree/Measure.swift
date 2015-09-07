@@ -53,12 +53,18 @@ struct Value<T>: Measurable, CustomStringConvertible {
     }
 }
 
+extension Measurable {
+    var toElement: TreeElement<Self, V> {
+        return TreeElement.AValue(self)
+    }
+}
+
 struct Size: Monoid, CustomStringConvertible {
     let value: Int
 
     private static let zero: Size = Size(0)
 
-    private init(_ value: Int) {
+    internal init(_ value: Int) {
         self.value = value
     }
 

@@ -25,8 +25,6 @@
 		8557DBE81B774569005E5CDD /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8557DBE61B774569005E5CDD /* Node.swift */; };
 		858F87021A07714A0074F885 /* FingerTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858F87011A07714A0074F885 /* FingerTree.swift */; };
 		858F87041A0774040074F885 /* Measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858F87031A0774040074F885 /* Measure.swift */; };
-		85BE4EF21B89862E00EF018B /* Cached.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85BE4EF11B89862E00EF018B /* Cached.swift */; };
-		85BE4EF31B89872400EF018B /* Cached.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85BE4EF11B89862E00EF018B /* Cached.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -56,7 +54,6 @@
 		8557DBE61B774569005E5CDD /* Node.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Node.swift; sourceTree = "<group>"; };
 		858F87011A07714A0074F885 /* FingerTree.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FingerTree.swift; sourceTree = "<group>"; };
 		858F87031A0774040074F885 /* Measure.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Measure.swift; sourceTree = "<group>"; };
-		85BE4EF11B89862E00EF018B /* Cached.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cached.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,7 +104,6 @@
 				850503C81B6DA453004C5B1A /* Collection.swift */,
 				8557DBE31B7744E5005E5CDD /* Affix.swift */,
 				8557DBE61B774569005E5CDD /* Node.swift */,
-				85BE4EF11B89862E00EF018B /* Cached.swift */,
 				22DE32A13C4CEEB93C6D442B /* TODO.txt */,
 				852DB6AD1B9D277F004FD22D /* main.swift */,
 			);
@@ -210,7 +206,6 @@
 				8557DBCE1B76E238005E5CDD /* FingerTreeTest.swift in Sources */,
 				852DB6AF1B9D277F004FD22D /* main.swift in Sources */,
 				8557DBD91B76E80A005E5CDD /* Measure.swift in Sources */,
-				85BE4EF31B89872400EF018B /* Cached.swift in Sources */,
 				8557DBDB1B76E80A005E5CDD /* Split.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -219,7 +214,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				85BE4EF21B89862E00EF018B /* Cached.swift in Sources */,
 				858F87021A07714A0074F885 /* FingerTree.swift in Sources */,
 				852DB6AE1B9D277F004FD22D /* main.swift in Sources */,
 				850503C91B6DA453004C5B1A /* Collection.swift in Sources */,

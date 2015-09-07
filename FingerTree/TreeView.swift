@@ -25,16 +25,17 @@ extension FingerTree {
         switch self {
         case .Empty:
             return nil
-        case let .Single(a, _):
-            return (a, FingerTree())
-        case let .Deep(.One(a, _), deeper, suffix, _):
-            let rest: FingerTree<Element, V>
+        case let .Single(a):
+            return (a, FingerTree.Empty)
+        case let .Deep(.One(a), deeper, suffix, _):
+            let rest: FingerTree
 
             if let (element, deeperRest) = deeper.viewLeft {
-                rest = FingerTree(
-                    prefix: element.toAffix,
+                rest = FingerTree.Deep(
+                    prefix: element.node!.toAffix,
                     deeper: deeperRest,
-                    suffix: suffix
+                    suffix: suffix,
+                    deeper.measure <> suffix.measure
                 )
             } else {
                 rest = suffix.toFingerTree
@@ -47,10 +48,11 @@ extension FingerTree {
 
             return (
                 first,
-                FingerTree(
+                FingerTree.Deep(
                     prefix: rest!,
                     deeper: deeper,
-                    suffix: suffix
+                    suffix: suffix,
+                    rest!.measure <> deeper.measure <> suffix.measure
                 )
             )
         }
@@ -60,16 +62,17 @@ extension FingerTree {
         switch self {
         case .Empty:
             return nil
-        case let .Single(a, _):
-            return (FingerTree(), a)
-        case let .Deep(prefix, deeper, .One(a, _), _):
-            let rest: FingerTree<Element, V>
+        case let .Single(a):
+            return (FingerTree.Empty, a)
+        case let .Deep(prefix, deeper, .One(a), _):
+            let rest: FingerTree
 
             if let (deeperRest, element) = deeper.viewRight {
-                rest = FingerTree(
+                rest = FingerTree.Deep(
                     prefix: prefix,
                     deeper: deeperRest,
-                    suffix: element.toAffix
+                    suffix: element.node!.toAffix,
+                    prefix.measure <> deeper.measure
                 )
             } else {
                 rest = prefix.toFingerTree
@@ -81,10 +84,11 @@ extension FingerTree {
             let (rest, last) = suffix.viewLast
 
             return (
-                FingerTree(
+                FingerTree.Deep(
                     prefix: prefix,
                     deeper: deeper,
-                    suffix: rest!
+                    suffix: rest!,
+                    prefix.measure <> deeper.measure <> rest!.measure
                 ),
                 last
             )
@@ -93,65 +97,66 @@ extension FingerTree {
 }
 
 extension Affix {
-    typealias NodeTree = FingerTree<Node<Element, V>, V>
-
-    var toFingerTree: FingerTree<Element, V> {
+    var toFingerTree: FingerTree<TMeasurable, V> {
         switch self {
-        case let .One(a, _):
-            return FingerTree<Element, V>(a)
-        case let .Two(a, b, _):
-            return FingerTree<Element, V>(
-                prefix: Affix(a),
-                deeper: NodeTree(),
-                suffix: Affix(b)
+        case let .One(a):
+            return FingerTree.Single(a)
+        case let .Two(a, b, annotation):
+            return FingerTree.Deep(
+                prefix: Affix.One(a),
+                deeper: FingerTree.Empty,
+                suffix: Affix.One(b),
+                annotation
             )
-        case let .Three(a, b, c, _):
-            return FingerTree<Element, V>(
-                prefix: Affix(a, b),
-                deeper: NodeTree(),
-                suffix: Affix(c)
+        case let .Three(a, b, c, annotation):
+            return FingerTree.Deep(
+                prefix: Affix.Two(a, b, a.measure <> b.measure),
+                deeper: FingerTree.Empty,
+                suffix: Affix.One(c),
+                annotation
             )
-        case let .Four(a, b, c, d, _):
-            return FingerTree<Element, V>(
-                prefix: Affix(a, b),
-                deeper: NodeTree(),
-                suffix: Affix(c, d)
+        case let .Four(a, b, c, d, annotation):
+            return FingerTree.Deep(
+                prefix: Affix.Two(a, b, a.measure <> b.measure),
+                deeper: FingerTree.Empty,
+                suffix: Affix.Two(c, d, c.measure <> d.measure),
+                annotation
             )
         }
     }
 }
 
 extension Node {
-    var toAffix: Affix<Element, V> {
+    var toAffix: Affix<TMeasurable, V> {
         switch self {
-        case let .Branch2(a, b, _):
-            return Affix(a, b)
-        case let .Branch3(a, b, c, _):
-            return Affix(a, b, c)
+        case let .Branch2(a, b, annotation):
+            return Affix.Two(a, b, annotation)
+        case let .Branch3(a, b, c, annotation):
+            return Affix.Three(a, b, c, annotation)
         }
     }
 }
 
 extension FingerTree {
     static func createDeep(
-        prefix prefix: Affix<Element, V>?,
-        deeper: NodeTree,
-        suffix: Affix<Element, V>?
+        prefix prefix: Affix<TMeasurable, V>?,
+        deeper: FingerTree,
+        suffix: Affix<TMeasurable, V>?
     ) -> FingerTree {
         if prefix == nil && suffix == nil {
             if let (element, rest) = deeper.viewLeft {
                 return createDeep(
-                    prefix: element.toAffix,
+                    prefix: element.node!.toAffix,
                     deeper: rest,
                     suffix: nil
                 )
             } else {
-                return FingerTree<Element, V>()
+                return FingerTree.Empty
             }
         } else if prefix == nil {
             if let (rest, element) = deeper.viewRight {
                 return createDeep(
-                    prefix: element.toAffix,
+                    prefix: element.node!.toAffix,
                     deeper: rest,
                     suffix: suffix
                 )
@@ -163,16 +168,17 @@ extension FingerTree {
                 return createDeep(
                     prefix: prefix,
                     deeper: rest,
-                    suffix: element.toAffix
+                    suffix: element.node!.toAffix
                 )
             } else {
                 return prefix!.toFingerTree
             }
         } else {
-            return FingerTree(
+            return FingerTree.Deep(
                 prefix: prefix!,
                 deeper: deeper,
-                suffix: suffix!
+                suffix: suffix!,
+                prefix!.measure <> deeper.measure <> suffix!.measure
             )
         }
     }
