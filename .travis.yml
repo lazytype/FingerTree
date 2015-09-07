@@ -1,0 +1,10 @@
+language: objective-c
+osx_image: xcode7
+git:
+  submodules: false
+branches:
+  only:
+    - master
+script: script/cibuild
+notifications:
+  email: false
