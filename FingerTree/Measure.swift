@@ -48,7 +48,7 @@ struct Value<T>: Measurable, CustomStringConvertible {
     }
 
     var measure: Size {
-        return Size(1)
+        return 1
     }
 
     var description: String {
@@ -62,26 +62,14 @@ extension Measurable {
     }
 }
 
-struct Size: Monoid, CustomStringConvertible {
-    let value: Int
+typealias Size = Int
 
-    private static let zero: Size = Size(0)
-
-    internal init(_ value: Int) {
-        self.value = value
-    }
-
+extension Size: Monoid {
     func append(other: Size) -> Size {
-        return Size(value + other.value)
+        return self + other
     }
 
-    static var identity: Size {
-        return Size.zero
-    }
-
-    var description: String {
-        return "\(value)"
-    }
+    static var identity: Size = 0
 }
 
 struct Prioritized<T>: Measurable {

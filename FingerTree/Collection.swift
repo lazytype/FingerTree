@@ -32,12 +32,12 @@ public struct ImmutableCollection<T>: CollectionType {
     public let startIndex: Int = 0
 
     public var endIndex: Int {
-        return tree.measure.value
+        return tree.measure
     }
 
     public subscript(position: Int) -> T {
         let (_, right) = try! tree.split(
-            predicate: {$0.value > position && position >= 0},
+            predicate: {$0 > position && position >= 0},
             startAnnotation: Size.identity
         )
 
@@ -68,7 +68,7 @@ public struct ImmutableCollection<T>: CollectionType {
     func insert(element: T, atIndex: Int) -> ImmutableCollection<T>  {
         do {
             let (left, right) = try tree.split(
-                predicate: {$0.value > atIndex && atIndex >= 0},
+                predicate: {$0 > atIndex && atIndex >= 0},
                 startAnnotation: Size.identity
             )
 
