@@ -8,3 +8,6 @@ branches:
 script: script/cibuild
 notifications:
   email: true
+before_install:
+  - brew update
+  - brew outdated xctool || brew upgrade xctool
