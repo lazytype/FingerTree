@@ -10,4 +10,4 @@ notifications:
   email: true
 before_install:
   - brew update
-  - brew install --HEAD xctool
+  - brew uninstall xctool && brew install --HEAD xctool
