@@ -62,8 +62,7 @@ class AffixTwoTest: AffixOneTest {
     override var affix: Affix<Value<Character>, Size> {
         return Affix.Two(
             Value("a").toElement,
-            Value("b").toElement,
-            Size(2)
+            Value("b").toElement
         )
     }
 
@@ -81,8 +80,7 @@ class AffixThreeTest: AffixOneTest {
         return Affix.Three(
             Value("a").toElement,
             Value("b").toElement,
-            Value("c").toElement,
-            Size(3)
+            Value("c").toElement
         )
     }
 
@@ -97,8 +95,7 @@ class AffixFourTest: AffixOneTest {
             Value("a").toElement,
             Value("b").toElement,
             Value("c").toElement,
-            Value("d").toElement,
-            Size(4)
+            Value("d").toElement
         )
     }
 
@@ -134,8 +131,7 @@ class AffixTest: XCTestCase {
             Value("a").toElement,
             Value("b").toElement,
             Value("c").toElement,
-            Value("d").toElement,
-            Size(4)
+            Value("d").toElement
         )
         for value in array {
             let (first, rest) = affix!.viewFirst
@@ -153,8 +149,7 @@ class AffixTest: XCTestCase {
             Value("a").toElement,
             Value("b").toElement,
             Value("c").toElement,
-            Value("d").toElement,
-            Size(4)
+            Value("d").toElement
         )
         for value in array.reverse() {
             let (rest, last) = affix!.viewLast

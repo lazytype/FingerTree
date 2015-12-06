@@ -101,26 +101,26 @@ extension Affix {
         switch self {
         case let .One(a):
             return FingerTree.Single(a)
-        case let .Two(a, b, annotation):
+        case let .Two(a, b):
             return FingerTree.Deep(
                 prefix: Affix.One(a),
                 deeper: FingerTree.Empty,
                 suffix: Affix.One(b),
-                annotation
+                a.measure <> b.measure
             )
-        case let .Three(a, b, c, annotation):
+        case let .Three(a, b, c):
             return FingerTree.Deep(
-                prefix: Affix.Two(a, b, a.measure <> b.measure),
+                prefix: Affix.Two(a, b),
                 deeper: FingerTree.Empty,
                 suffix: Affix.One(c),
-                annotation
+                a.measure <> b.measure <> c.measure
             )
-        case let .Four(a, b, c, d, annotation):
+        case let .Four(a, b, c, d):
             return FingerTree.Deep(
-                prefix: Affix.Two(a, b, a.measure <> b.measure),
+                prefix: Affix.Two(a, b),
                 deeper: FingerTree.Empty,
-                suffix: Affix.Two(c, d, c.measure <> d.measure),
-                annotation
+                suffix: Affix.Two(c, d),
+                a.measure <> b.measure <> c.measure <> d.measure
             )
         }
     }
@@ -129,10 +129,10 @@ extension Affix {
 extension Node {
     var toAffix: Affix<TValue, TAnnotation> {
         switch self {
-        case let .Branch2(a, b, annotation):
-            return Affix.Two(a, b, annotation)
-        case let .Branch3(a, b, c, annotation):
-            return Affix.Three(a, b, c, annotation)
+        case let .Branch2(a, b, _):
+            return Affix.Two(a, b)
+        case let .Branch3(a, b, c, _):
+            return Affix.Three(a, b, c)
         }
     }
 }

@@ -35,7 +35,7 @@ enum FingerTree<
         TAnnotation
     )
 
-    func preface(element: Element) -> FingerTree {
+    func preface(let element: Element) -> FingerTree {
         switch self {
         case .Empty:
             return FingerTree.Single(element)
@@ -46,9 +46,9 @@ enum FingerTree<
                 suffix: Affix.One(a),
                 element.measure <> a.measure
             )
-        case let .Deep(.Four(a, b, c, d, _), deeper, suffix, annotation):
+        case let .Deep(.Four(a, b, c, d), deeper, suffix, annotation):
             return FingerTree.Deep(
-                prefix: Affix.Two(element, a, element.measure <> a.measure),
+                prefix: Affix.Two(element, a),
                 deeper: deeper.preface(
                     Node.Branch3(b, c, d, b.measure <> c.measure <> d.measure)
                         .toElement
@@ -77,14 +77,14 @@ enum FingerTree<
                 suffix: Affix.One(element),
                 a.measure <> element.measure
             )
-        case let .Deep(prefix, deeper, .Four(a, b, c, d, _), annotation):
+        case let .Deep(prefix, deeper, .Four(a, b, c, d), annotation):
             return FingerTree.Deep(
                 prefix: prefix,
                 deeper: deeper.append(
                     Node.Branch3(a, b, c, a.measure <> b.measure <> c.measure)
                         .toElement
                 ),
-                suffix: Affix.Two(d, element, d.measure <> element.measure),
+                suffix: Affix.Two(d, element),
                 annotation <> element.measure
             )
         case let .Deep(prefix, deeper, suffix, annotation):

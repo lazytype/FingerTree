@@ -31,18 +31,18 @@ enum Affix<
     typealias Element = TreeElement<TValue, TAnnotation>
 
     case One(Element)
-    case Two(Element, Element, TAnnotation)
-    case Three(Element, Element, Element, TAnnotation)
-    case Four(Element, Element, Element, Element, TAnnotation)
+    case Two(Element, Element)
+    case Three(Element, Element, Element)
+    case Four(Element, Element, Element, Element)
 
     func preface(element: Element) throws -> Affix<TValue, TAnnotation> {
         switch self {
         case let .One(a):
-            return Affix.Two(element, a, element.measure <> a.measure)
-        case let .Two(a, b, annotation):
-            return Affix.Three(element, a, b, element.measure <> annotation)
-        case let .Three(a, b, c, annotation):
-            return Affix.Four(element, a, b, c, element.measure <> annotation)
+            return Affix.Two(element, a)
+        case let .Two(a, b):
+            return Affix.Three(element, a, b)
+        case let .Three(a, b, c):
+            return Affix.Four(element, a, b, c)
         case .Four:
             throw AffixError.TooLarge
         }
@@ -51,11 +51,11 @@ enum Affix<
     func append(element: Element) throws -> Affix<TValue, TAnnotation> {
         switch self {
         case let .One(a):
-            return Affix.Two(a, element, a.measure <> element.measure)
-        case let .Two(a, b, annotation):
-            return Affix.Three(a, b, element, annotation <> element.measure)
-        case let .Three(a, b, c, annotation):
-            return Affix.Four(a, b, c, element, annotation <> element.measure)
+            return Affix.Two(a, element)
+        case let .Two(a, b):
+            return Affix.Three(a, b, element)
+        case let .Three(a, b, c):
+            return Affix.Four(a, b, c, element)
         case .Four:
             throw AffixError.TooLarge
         }
@@ -65,12 +65,12 @@ enum Affix<
         switch self {
         case let .One(a):
             return (a, nil)
-        case let .Two(a, b, _):
+        case let .Two(a, b):
             return (a, Affix.One(b))
-        case let .Three(a, b, c, _):
-            return (a, Affix.Two(b, c, b.measure <> c.measure))
-        case let .Four(a, b, c, d, _):
-            return (a, Affix.Three(b, c, d, b.measure <> c.measure <> d.measure))
+        case let .Three(a, b, c):
+            return (a, Affix.Two(b, c))
+        case let .Four(a, b, c, d):
+            return (a, Affix.Three(b, c, d))
         }
     }
 
@@ -78,12 +78,12 @@ enum Affix<
         switch self {
         case let .One(a):
             return (nil, a)
-        case let .Two(a, b, _):
+        case let .Two(a, b):
             return (Affix.One(a), b)
-        case let .Three(a, b, c, _):
-            return (Affix.Two(a, b, a.measure <> b.measure), c)
-        case let .Four(a, b, c, d, _):
-            return (Affix.Three(a, b, c, a.measure <> b.measure <> c.measure), d)
+        case let .Three(a, b, c):
+            return (Affix.Two(a, b), c)
+        case let .Four(a, b, c, d):
+            return (Affix.Three(a, b, c), d)
         }
     }
 
@@ -91,11 +91,11 @@ enum Affix<
         switch self {
         case let .One(a):
             return [a]
-        case let .Two(a, b, _):
+        case let .Two(a, b):
             return [a, b]
-        case let .Three(a, b, c, _):
+        case let .Three(a, b, c):
             return [a, b, c]
-        case let .Four(a, b, c, d, _):
+        case let .Four(a, b, c, d):
             return [a, b, c, d]
         }
     }
@@ -104,12 +104,12 @@ enum Affix<
         switch self {
         case let .One(a):
             return a.measure
-        case let .Two(_, _, annotation):
-            return annotation
-        case let .Three(_, _, _, annotation):
-            return annotation
-        case let .Four(_, _, _, _, annotation):
-            return annotation
+        case let .Two(a, b):
+            return a.measure <> b.measure
+        case let .Three(a, b, c):
+            return a.measure <> b.measure <> c.measure
+        case let .Four(a, b, c, d):
+            return a.measure <> b.measure <> c.measure <> d.measure
         }
     }
 

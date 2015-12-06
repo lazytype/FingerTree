@@ -126,13 +126,9 @@ public struct PriorityQueue<T> {
             )
         case let .Deep(prefix, deeper, suffix, annotation):
             switch prefix {
-            case let .Four(a, b, c, d, _):
+            case let .Four(a, b, c, d):
                 newTree = FingerTree<Prioritized<T>, Priority>.Deep(
-                    prefix: Affix.Two(
-                        prioritized.toElement,
-                        a,
-                        prioritized.measure <> a.measure
-                    ),
+                    prefix: Affix.Two(prioritized.toElement, a),
                     deeper: deeper.preface(
                         Node.Branch3(
                             b, c, d,
