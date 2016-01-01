@@ -56,6 +56,10 @@ class AffixOneTest: XCTestCase {
             array.map {$0.value!.value}
         )
     }
+
+    func testMeasure() {
+        XCTAssertEqual(affix.measure, 1)
+    }
 }
 
 class AffixTwoTest: AffixOneTest {
@@ -73,6 +77,10 @@ class AffixTwoTest: AffixOneTest {
     override func testToArray() {
         XCTAssertEqual(affix.toArray.map {$0.value!.value}, ["a", "b"])
     }
+
+    override func testMeasure() {
+        XCTAssertEqual(affix.measure, 2)
+    }
 }
 
 class AffixThreeTest: AffixOneTest {
@@ -86,6 +94,10 @@ class AffixThreeTest: AffixOneTest {
 
     override var array: [Character] {
         return ["a", "b", "c"]
+    }
+
+    override func testMeasure() {
+        XCTAssertEqual(affix.measure, 3)
     }
 }
 
@@ -121,6 +133,10 @@ class AffixFourTest: AffixOneTest {
         } catch {}
 
         XCTFail("append() should throw AffixError.TooLarge")
+    }
+
+    override func testMeasure() {
+        XCTAssertEqual(affix.measure, 4)
     }
 }
 
