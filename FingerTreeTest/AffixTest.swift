@@ -22,6 +22,7 @@
 
 import XCTest
 
+
 class AffixOneTest: XCTestCase {
     var affix: Affix<Value<Character>, Size> {
         return Affix.One(Value("a").toElement)
@@ -36,29 +37,33 @@ class AffixOneTest: XCTestCase {
     }
 
     func testPreface() {
-        var array = affix.toArray
-        array.insert(Value("x").toElement, atIndex: 0)
+        var array = self.array;
+        array.insert("x", atIndex: 0)
 
         XCTAssertEqual(
             try! affix.preface(Value("x").toElement)
                 .toArray.map {$0.value!.value},
-            array.map {$0.value!.value}
+            array
         )
     }
 
     func testAppend() {
-        var array = affix.toArray
-        array.append(Value("x").toElement)
+        var array = self.array
+        array.append("x")
 
         XCTAssertEqual(
             try! affix.append(Value("x").toElement)
                 .toArray.map {$0.value!.value},
-            array.map {$0.value!.value}
+            array
         )
     }
 
     func testMeasure() {
-        XCTAssertEqual(affix.measure, 1)
+        XCTAssertEqual(affix.measure, array.count)
+    }
+
+    func testGenerate() {
+        XCTAssertEqual(affix.generate().map {$0.value!.value}, array)
     }
 }
 
@@ -75,11 +80,7 @@ class AffixTwoTest: AffixOneTest {
     }
 
     override func testToArray() {
-        XCTAssertEqual(affix.toArray.map {$0.value!.value}, ["a", "b"])
-    }
-
-    override func testMeasure() {
-        XCTAssertEqual(affix.measure, 2)
+        XCTAssertEqual(affix.toArray.map {$0.value!.value}, self.array)
     }
 }
 
@@ -94,10 +95,6 @@ class AffixThreeTest: AffixOneTest {
 
     override var array: [Character] {
         return ["a", "b", "c"]
-    }
-
-    override func testMeasure() {
-        XCTAssertEqual(affix.measure, 3)
     }
 }
 
@@ -133,10 +130,6 @@ class AffixFourTest: AffixOneTest {
         } catch {}
 
         XCTFail("append() should throw AffixError.TooLarge")
-    }
-
-    override func testMeasure() {
-        XCTAssertEqual(affix.measure, 4)
     }
 }
 

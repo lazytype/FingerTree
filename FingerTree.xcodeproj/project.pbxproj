@@ -10,8 +10,9 @@
 		22DE31BA22EAD8EF74655BC6 /* Split.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DE346643185F70CBED1D22 /* Split.swift */; };
 		22DE35CD6B042406277DD9FC /* TreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DE369326DC5EABE49EECFE /* TreeView.swift */; };
 		850503C91B6DA453004C5B1A /* Collection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 850503C81B6DA453004C5B1A /* Collection.swift */; };
-		852DB6AE1B9D277F004FD22D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852DB6AD1B9D277F004FD22D /* main.swift */; settings = {ASSET_TAGS = (); }; };
-		852DB6AF1B9D277F004FD22D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852DB6AD1B9D277F004FD22D /* main.swift */; settings = {ASSET_TAGS = (); }; };
+		850996581C36B13300FF7FD5 /* NodeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 850996571C36B13300FF7FD5 /* NodeTest.swift */; };
+		852DB6AE1B9D277F004FD22D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852DB6AD1B9D277F004FD22D /* main.swift */; };
+		852DB6AF1B9D277F004FD22D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852DB6AD1B9D277F004FD22D /* main.swift */; };
 		8557DBCE1B76E238005E5CDD /* FingerTreeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8557DBCD1B76E238005E5CDD /* FingerTreeTest.swift */; };
 		8557DBD81B76E7F1005E5CDD /* FingerTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858F87011A07714A0074F885 /* FingerTree.swift */; };
 		8557DBD91B76E80A005E5CDD /* Measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858F87031A0774040074F885 /* Measure.swift */; };
@@ -44,6 +45,7 @@
 		22DE346643185F70CBED1D22 /* Split.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Split.swift; sourceTree = "<group>"; };
 		22DE369326DC5EABE49EECFE /* TreeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TreeView.swift; sourceTree = "<group>"; };
 		850503C81B6DA453004C5B1A /* Collection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Collection.swift; sourceTree = "<group>"; };
+		850996571C36B13300FF7FD5 /* NodeTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NodeTest.swift; sourceTree = "<group>"; };
 		852DB6AD1B9D277F004FD22D /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8557DBCB1B76E238005E5CDD /* FingerTreeTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FingerTreeTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8557DBCD1B76E238005E5CDD /* FingerTreeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FingerTreeTest.swift; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 			children = (
 				8557DBCD1B76E238005E5CDD /* FingerTreeTest.swift */,
 				8557DBDF1B77435D005E5CDD /* AffixTest.swift */,
+				850996571C36B13300FF7FD5 /* NodeTest.swift */,
 				8557DBCF1B76E238005E5CDD /* Info.plist */,
 			);
 			path = FingerTreeTest;
@@ -205,6 +208,7 @@
 				8557DBDE1B76E80A005E5CDD /* Collection.swift in Sources */,
 				8557DBCE1B76E238005E5CDD /* FingerTreeTest.swift in Sources */,
 				852DB6AF1B9D277F004FD22D /* main.swift in Sources */,
+				850996581C36B13300FF7FD5 /* NodeTest.swift in Sources */,
 				8557DBD91B76E80A005E5CDD /* Measure.swift in Sources */,
 				8557DBDB1B76E80A005E5CDD /* Split.swift in Sources */,
 			);

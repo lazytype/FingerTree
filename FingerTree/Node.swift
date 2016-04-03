@@ -61,7 +61,7 @@ enum Node<
     indirect case Branch2(Element, Element, TAnnotation)
     indirect case Branch3(Element, Element, Element, TAnnotation)
 
-    private var toArray: [Element] {
+    var toArray: [Element] {
         switch self {
         case let .Branch2(a, b, _):
             return [a, b]
