@@ -46,13 +46,13 @@ public struct ImmutableCollection<T>: CollectionType {
     }
 
     public func generate() -> AnyGenerator<T> {
-        return anyGenerator(
+        return AnyGenerator(
             tree.generate().lazy.map {$0.value!.value}.generate()
         )
     }
 
     public func reverse() -> AnyGenerator<T> {
-        return anyGenerator(
+        return AnyGenerator(
             tree.reverse().lazy.map {$0.value!.value}.generate()
         )
     }

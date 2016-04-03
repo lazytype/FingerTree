@@ -213,9 +213,9 @@ enum FingerTree<
     func generate() -> AnyGenerator<Element> {
         switch self {
         case .Empty:
-            return anyGenerator(EmptyGenerator())
+            return AnyGenerator(EmptyGenerator())
         case let .Single(a):
-            return anyGenerator(GeneratorOfOne(a))
+            return AnyGenerator(GeneratorOfOne(a))
         case let .Deep(prefix, deeper, suffix, _):
             var (prefixGen, deeperGen, suffixGen) = (
                 prefix.generate(),
@@ -225,7 +225,7 @@ enum FingerTree<
 
             var nodeGen = deeperGen.next()?.node!.generate()
 
-            return anyGenerator {
+            return AnyGenerator {
                 if let value = prefixGen.next() {
                     return value
                 }
@@ -250,9 +250,9 @@ enum FingerTree<
     func reverse() -> AnyGenerator<Element> {
         switch self {
         case .Empty:
-            return anyGenerator(EmptyGenerator())
+            return AnyGenerator(EmptyGenerator())
         case let .Single(a):
-            return anyGenerator(GeneratorOfOne(a))
+            return AnyGenerator(GeneratorOfOne(a))
         case let .Deep(prefix, deeper, suffix, _):
             var (prefixGen, deeperGen, suffixGen) = (
                 prefix.reverse().generate(),
@@ -262,7 +262,7 @@ enum FingerTree<
 
             var nodeGen = deeperGen.next()?.node!.generate()
 
-            return anyGenerator {
+            return AnyGenerator {
                 if let value = suffixGen.next() {
                     return value
                 }

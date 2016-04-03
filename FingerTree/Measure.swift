@@ -34,7 +34,7 @@ internal func <> <TAnnotation: Monoid>(
 }
 
 internal protocol Measurable {
-    typealias Annotation: Monoid
+    associatedtype Annotation: Monoid
     var measure: Annotation {get}
 }
 
