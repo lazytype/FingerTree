@@ -1,119 +1,115 @@
 // Affix.swift
 //
-// Copyright (c) 2015 Michael Mitchell
+// Copyright (c) 2015-Present, Michael Mitchell
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-enum AffixError: ErrorType {
-    case TooLarge
+enum AffixError: ErrorProtocol {
+  case tooLarge
 }
 
-enum Affix<
-    TValue: Measurable, TAnnotation: Monoid
-    where TAnnotation == TValue.Annotation>: Measurable, SequenceType {
-    
-    typealias Element = TreeElement<TValue, TAnnotation>
+enum Affix<TValue: Measurable, TAnnotation: Monoid where TAnnotation == TValue.Annotation>
+  : Measurable, Sequence {
+  
+  typealias Element = TreeElement<TValue, TAnnotation>
 
-    case One(Element)
-    case Two(Element, Element)
-    case Three(Element, Element, Element)
-    case Four(Element, Element, Element, Element)
+  case one(Element)
+  case two(Element, Element)
+  case three(Element, Element, Element)
+  case four(Element, Element, Element, Element)
 
-    func preface(element: Element) throws -> Affix<TValue, TAnnotation> {
-        switch self {
-        case let .One(a):
-            return Affix.Two(element, a)
-        case let .Two(a, b):
-            return Affix.Three(element, a, b)
-        case let .Three(a, b, c):
-            return Affix.Four(element, a, b, c)
-        case .Four:
-            throw AffixError.TooLarge
-        }
+  var viewFirst: (Element, Affix<TValue, TAnnotation>?) {
+    switch self {
+    case let .one(a):
+      return (a, nil)
+    case let .two(a, b):
+      return (a, Affix.one(b))
+    case let .three(a, b, c):
+      return (a, Affix.two(b, c))
+    case let .four(a, b, c, d):
+      return (a, Affix.three(b, c, d))
     }
+  }
 
-    func append(element: Element) throws -> Affix<TValue, TAnnotation> {
-        switch self {
-        case let .One(a):
-            return Affix.Two(a, element)
-        case let .Two(a, b):
-            return Affix.Three(a, b, element)
-        case let .Three(a, b, c):
-            return Affix.Four(a, b, c, element)
-        case .Four:
-            throw AffixError.TooLarge
-        }
+  var viewLast: (Affix<TValue, TAnnotation>?, Element) {
+    switch self {
+    case let .one(a):
+      return (nil, a)
+    case let .two(a, b):
+      return (Affix.one(a), b)
+    case let .three(a, b, c):
+      return (Affix.two(a, b), c)
+    case let .four(a, b, c, d):
+      return (Affix.three(a, b, c), d)
     }
+  }
 
-    var viewFirst: (Element, Affix<TValue, TAnnotation>?) {
-        switch self {
-        case let .One(a):
-            return (a, nil)
-        case let .Two(a, b):
-            return (a, Affix.One(b))
-        case let .Three(a, b, c):
-            return (a, Affix.Two(b, c))
-        case let .Four(a, b, c, d):
-            return (a, Affix.Three(b, c, d))
-        }
+  var measure: TAnnotation {
+    switch self {
+    case let .one(a):
+      return a.measure
+    case let .two(a, b):
+      return a.measure <> b.measure
+    case let .three(a, b, c):
+      return a.measure <> b.measure <> c.measure
+    case let .four(a, b, c, d):
+      return a.measure <> b.measure <> c.measure <> d.measure
     }
+  }
 
-    var viewLast: (Affix<TValue, TAnnotation>?, Element) {
-        switch self {
-        case let .One(a):
-            return (nil, a)
-        case let .Two(a, b):
-            return (Affix.One(a), b)
-        case let .Three(a, b, c):
-            return (Affix.Two(a, b), c)
-        case let .Four(a, b, c, d):
-            return (Affix.Three(a, b, c), d)
-        }
+  func preface(_ element: Element) throws -> Affix<TValue, TAnnotation> {
+    switch self {
+    case let .one(a):
+      return Affix.two(element, a)
+    case let .two(a, b):
+      return Affix.three(element, a, b)
+    case let .three(a, b, c):
+      return Affix.four(element, a, b, c)
+    case .four:
+      throw AffixError.tooLarge
     }
+  }
 
-    var toArray: [Element] {
-        switch self {
-        case let .One(a):
-            return [a]
-        case let .Two(a, b):
-            return [a, b]
-        case let .Three(a, b, c):
-            return [a, b, c]
-        case let .Four(a, b, c, d):
-            return [a, b, c, d]
-        }
+  func append(_ element: Element) throws -> Affix<TValue, TAnnotation> {
+    switch self {
+    case let .one(a):
+      return Affix.two(a, element)
+    case let .two(a, b):
+      return Affix.three(a, b, element)
+    case let .three(a, b, c):
+      return Affix.four(a, b, c, element)
+    case .four:
+      throw AffixError.tooLarge
     }
+  }
 
-    var measure: TAnnotation {
-        switch self {
-        case let .One(a):
-            return a.measure
-        case let .Two(a, b):
-            return a.measure <> b.measure
-        case let .Three(a, b, c):
-            return a.measure <> b.measure <> c.measure
-        case let .Four(a, b, c, d):
-            return a.measure <> b.measure <> c.measure <> d.measure
-        }
+  func makeArray() -> [Element] {
+    switch self {
+    case let .one(a):
+      return [a]
+    case let .two(a, b):
+      return [a, b]
+    case let .three(a, b, c):
+      return [a, b, c]
+    case let .four(a, b, c, d):
+      return [a, b, c, d]
     }
+  }
 
-    func generate() -> IndexingGenerator<[Element]> {
-        return toArray.generate()
-    }
+  func makeIterator() -> IndexingIterator<[Element]> {
+    return makeArray().makeIterator()
+  }
 }

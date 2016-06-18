@@ -1,6 +1,6 @@
 TODO:
-    - Complete test coverage
-    - Clean up API and code/style
-        - Prevent unnecessary copying of objects
-        - Don't use sub-Arrays (getting a Slice and converting to Array)
-    - Profile performance
+  - Complete test coverage
+  - Clean up API and code/style
+    - Prevent unnecessary copying of objects
+    - Don't use sub-Arrays (getting a Slice and converting to Array)
+  - Profile performance
