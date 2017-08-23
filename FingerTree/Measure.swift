@@ -22,7 +22,11 @@ protocol Monoid {
   func append(_ other: Self) -> Self
 }
 
-infix operator <> { associativity left precedence 140 }
+precedencegroup Additive {
+  associativity: left
+}
+
+infix operator <> : Additive
 internal func <> <TAnnotation: Monoid>(lhs: TAnnotation, rhs: TAnnotation) -> TAnnotation {
   return lhs.append(rhs)
 }

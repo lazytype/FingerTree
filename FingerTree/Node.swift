@@ -17,8 +17,8 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-enum TreeElement<TValue: Measurable, TAnnotation where TAnnotation == TValue.Annotation>
-  : Measurable {
+enum TreeElement<TValue: Measurable, TAnnotation>
+  : Measurable where TAnnotation == TValue.Annotation {
 
   case aValue(TValue)
   case aNode(Node<TValue, TAnnotation>)
@@ -49,8 +49,8 @@ enum TreeElement<TValue: Measurable, TAnnotation where TAnnotation == TValue.Ann
   }
 }
 
-enum Node<TValue: Measurable, TAnnotation: Monoid where TAnnotation == TValue.Annotation>
-  : Measurable, Sequence {
+enum Node<TValue: Measurable, TAnnotation>
+  : Measurable, Sequence where TAnnotation == TValue.Annotation {
 
   typealias Element = TreeElement<TValue, TAnnotation>
 
